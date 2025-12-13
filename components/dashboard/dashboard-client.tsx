@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import type { Article, Tag, KPIStats, Filters } from "@/types/database"
@@ -14,6 +14,17 @@ interface DashboardClientProps {
   userId: string
 }
 
+interface DashboardData {
+  articles: Article[]
+  tags: Tag[]
+  kpis: KPIStats
+  filterOptions: {
+    sectors: string[]
+    triggers: string[]
+    countries: string[]
+  }
+}
+
 // API fetcher
 const fetcher = async (url: string, options?: RequestInit) => {
   const res = await fetch(url, options)
@@ -22,6 +33,58 @@ const fetcher = async (url: string, options?: RequestInit) => {
     throw new Error(error.error || "An error occurred")
   }
   return res.json()
+}
+
+// Client-side filtering function
+const applyFilters = (articles: Article[], filters: Filters): Article[] => {
+  return articles.filter((article) => {
+    // Search filter (title, company, or text)
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase()
+      const matchesSearch =
+        article.title?.toLowerCase().includes(searchLower) ||
+        article.company?.toLowerCase().includes(searchLower) ||
+        article.text?.toLowerCase().includes(searchLower) ||
+        article.ai_summary?.toLowerCase().includes(searchLower)
+      if (!matchesSearch) return false
+    }
+
+    // Score filters
+    if (filters.minScore !== null && filters.minScore !== undefined) {
+      if (!article.lead_score || article.lead_score < filters.minScore) return false
+    }
+    if (filters.maxScore !== null && filters.maxScore !== undefined) {
+      if (!article.lead_score || article.lead_score > filters.maxScore) return false
+    }
+
+    // Sector filter
+    if (filters.sectors && filters.sectors.length > 0) {
+      const articleSectors = article.sector || []
+      const hasSector = filters.sectors.some((sector) => articleSectors.includes(sector))
+      if (!hasSector) return false
+    }
+
+    // Trigger filter
+    if (filters.triggers && filters.triggers.length > 0) {
+      const articleTriggers = article.trigger_signal || []
+      const hasTrigger = filters.triggers.some((trigger) => articleTriggers.includes(trigger))
+      if (!hasTrigger) return false
+    }
+
+    // Country filter
+    if (filters.country) {
+      if (article.location_country !== filters.country) return false
+    }
+
+    // Tag filter
+    if (filters.tagIds && filters.tagIds.length > 0) {
+      const articleTagIds = (article.tags as any[])?.map((t) => t.id) || []
+      const hasTag = filters.tagIds.some((tagId) => articleTagIds.includes(tagId))
+      if (!hasTag) return false
+    }
+
+    return true
+  })
 }
 
 export function DashboardClient({ userId }: DashboardClientProps) {
@@ -38,50 +101,33 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
 
-  // Fetch KPIs - only once, not dependent on filters
-  const { data: kpis, isLoading: kpisLoading } = useSWR<KPIStats>("/api/dashboard/kpis", fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000, // Cache for 1 minute
-  })
-
-  // Fetch tags - only once, not dependent on filters
-  const { data: tags, mutate: mutateTags } = useSWR<Tag[]>("/api/dashboard/tags", fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 30000, // Cache for 30 seconds
-  })
-
-  // Fetch filter options - only once, not dependent on filters
-  const { data: filterOptions } = useSWR<{
-    sectors: string[]
-    triggers: string[]
-    countries: string[]
-  }>("/api/dashboard/filter-options", fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 300000, // Cache for 5 minutes
-  })
-
-  // Fetch articles with filters - depends on page and filters
+  // Fetch all dashboard data in ONE request
   const {
-    data: articlesData,
-    isLoading: articlesLoading,
-    mutate: mutateArticles,
-  } = useSWR<{ articles: Article[]; total: number }>(
-    ["/api/dashboard/articles", page, filters],
-    ([url]) =>
-      fetcher(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page, pageSize: 20, filters }),
-      }),
-    {
-      keepPreviousData: true, // Keep previous data while loading new data
-      dedupingInterval: 2000, // Dedupe requests within 2 seconds
-    }
-  )
+    data: dashboardData,
+    isLoading,
+    mutate: mutateDashboard,
+  } = useSWR<DashboardData>("/api/dashboard/data", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000, // Cache for 10 seconds
+  })
+
+  // Apply filters on client-side
+  const filteredArticles = useMemo(() => {
+    if (!dashboardData?.articles) return []
+    return applyFilters(dashboardData.articles, filters)
+  }, [dashboardData?.articles, filters])
+
+  // Paginate filtered articles
+  const pageSize = 20
+  const paginatedArticles = useMemo(() => {
+    const start = page * pageSize
+    const end = start + pageSize
+    return filteredArticles.slice(start, end)
+  }, [filteredArticles, page])
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }))
-    setPage(0)
+    setPage(0) // Reset to first page when filters change
   }, [])
 
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
@@ -97,7 +143,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           method: "DELETE",
         })
       }
-      mutateArticles()
+      // Refresh all dashboard data
+      mutateDashboard()
     } catch (error) {
       console.error("Error updating tag:", error)
     }
@@ -113,22 +160,22 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       <DashboardHeader onSignOut={handleSignOut} onManageTags={() => setShowTagsManager(true)} />
 
       <main className="max-w-[1600px] mx-auto p-6 space-y-6">
-        <KPICards kpis={kpis} loading={kpisLoading} />
+        <KPICards kpis={dashboardData?.kpis} loading={isLoading} />
 
         <FiltersBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={filterOptions || { sectors: [], triggers: [], countries: [] }}
-          tags={tags || []}
+          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], countries: [] }}
+          tags={dashboardData?.tags || []}
         />
 
         <LeadsTable
-          articles={articlesData?.articles || []}
-          total={articlesData?.total || 0}
+          articles={paginatedArticles}
+          total={filteredArticles.length}
           page={page}
           onPageChange={setPage}
-          loading={articlesLoading}
-          tags={tags || []}
+          loading={isLoading}
+          tags={dashboardData?.tags || []}
           onTagUpdate={handleTagUpdate}
           filters={filters}
           userId={userId}
@@ -136,7 +183,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       </main>
 
       {showTagsManager && (
-        <TagsManager tags={tags || []} onClose={() => setShowTagsManager(false)} onUpdate={mutateTags} />
+        <TagsManager
+          tags={dashboardData?.tags || []}
+          onClose={() => setShowTagsManager(false)}
+          onUpdate={mutateDashboard}
+        />
       )}
     </div>
   )
