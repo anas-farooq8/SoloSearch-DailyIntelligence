@@ -63,13 +63,7 @@ export const metadata: Metadata = {
         alt: 'SoloSearch Logo',
       },
     ],
-  },
-  twitter: {
-    card: 'summary',
-    title: 'SoloSearch-DailyIntelligence',
-    description: 'Daily Intelligence Dashboard for Solo Search - NHS & Digital market signals',
-    images: ['https://www.google.com/s2/favicons?domain=https://www.solosearch.co.uk/&sz=512'],
-  },
+  }
 }
 
 export default function RootLayout({
