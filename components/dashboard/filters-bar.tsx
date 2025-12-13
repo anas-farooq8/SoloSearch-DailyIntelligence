@@ -25,7 +25,7 @@ interface FiltersBarProps {
 
 export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: FiltersBarProps) {
   const scoreRanges = [
-    { label: "All Scores", min: null, max: null },
+    { label: "Scores", min: null, max: null },
     { label: "8-10 (Immediate)", min: 8, max: 10 },
     { label: "6-7 (High Interest)", min: 6, max: 7 },
     { label: "4-5 (Monitor)", min: 4, max: 5 },
@@ -54,7 +54,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3" suppressHydrationWarning>
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -74,7 +74,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             onFilterChange({ minScore: range?.min ?? null, maxScore: range?.max ?? null })
           }}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] cursor-pointer">
             <SelectValue placeholder="Score Range" />
           </SelectTrigger>
           <SelectContent>
@@ -89,12 +89,23 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         {/* Sectors Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[120px] bg-transparent">
+            <Button variant="outline" className="min-w-[120px] bg-transparent cursor-pointer">
               Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-sectors"
+              checked={filters.sectors.length === 0}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ sectors: [] })
+                }
+              }}
+            >
+              All Sectors
+            </DropdownMenuCheckboxItem>
             {filterOptions.sectors.map((sector) => (
               <DropdownMenuCheckboxItem
                 key={sector}
@@ -114,12 +125,23 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         {/* Triggers Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[120px] bg-transparent">
+            <Button variant="outline" className="min-w-[120px] bg-transparent cursor-pointer">
               Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-triggers"
+              checked={filters.triggers.length === 0}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ triggers: [] })
+                }
+              }}
+            >
+              All Triggers
+            </DropdownMenuCheckboxItem>
             {filterOptions.triggers.map((trigger) => (
               <DropdownMenuCheckboxItem
                 key={trigger}
@@ -141,7 +163,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           value={filters.country || "all"}
           onValueChange={(v) => onFilterChange({ country: v === "all" ? null : v })}
         >
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[120px] cursor-pointer">
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +179,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         {/* Tags Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[100px] bg-transparent">
+            <Button variant="outline" className="min-w-[100px] bg-transparent cursor-pointer">
               Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -182,7 +204,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer">
             <X className="h-4 w-4 mr-1" />
             Clear
           </Button>

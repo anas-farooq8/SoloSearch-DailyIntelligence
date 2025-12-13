@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -81,7 +82,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1 text-center">
+        <CardHeader className="space-y-3 text-center">
+          <div className="flex justify-center">
+            <Image
+              src="https://www.google.com/s2/favicons?domain=https://www.solosearch.co.uk/&sz=64"
+              alt="SoloSearch Logo"
+              width={48}
+              height={48}
+              className="rounded"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-slate-900">SoloSearch-DailyIntelligence</CardTitle>
           <CardDescription className="text-slate-600">Sign in to access your dashboard</CardDescription>
         </CardHeader>

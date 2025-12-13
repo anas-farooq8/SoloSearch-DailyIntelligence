@@ -48,6 +48,28 @@ export const metadata: Metadata = {
       type: 'image/png',
     },
   },
+  openGraph: {
+    type: 'website',
+    locale: 'en_GB',
+    url: 'https://www.solosearch.co.uk/',
+    title: 'SoloSearch-DailyIntelligence',
+    description: 'Daily Intelligence Dashboard for Solo Search - NHS & Digital market signals',
+    siteName: 'SoloSearch',
+    images: [
+      {
+        url: 'https://www.google.com/s2/favicons?domain=https://www.solosearch.co.uk/&sz=512',
+        width: 512,
+        height: 512,
+        alt: 'SoloSearch Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'SoloSearch-DailyIntelligence',
+    description: 'Daily Intelligence Dashboard for Solo Search - NHS & Digital market signals',
+    images: ['https://www.google.com/s2/favicons?domain=https://www.solosearch.co.uk/&sz=512'],
+  },
 }
 
 export default function RootLayout({

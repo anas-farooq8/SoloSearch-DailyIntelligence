@@ -54,9 +54,6 @@ export async function GET() {
           .gte("lead_score", 7)
           .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
 
-        // Awaiting review (status = queued)
-        supabase.from("articles").select("id", { count: "exact", head: true }).eq("status", "queued"),
-
         // Weekly added (last 7 days)
         supabase
           .from("articles")
@@ -93,13 +90,15 @@ export async function GET() {
     const countries = [...new Set(articles.map((a) => a.location_country).filter(Boolean))].sort()
 
     // Process KPIs
-    const [totalTodayResult, highPriorityTodayResult, awaitingReviewResult, weeklyAddedResult] =
-      kpisResult
+    const [totalTodayResult, highPriorityTodayResult, weeklyAddedResult] = kpisResult
+
+    // Count processed articles without any tags (awaiting review)
+    const awaitingReview = articles.filter((article) => !article.tags || article.tags.length === 0).length
 
     const kpis = {
       total_today: totalTodayResult.count || 0,
       high_priority_today: highPriorityTodayResult.count || 0,
-      awaiting_review: awaitingReviewResult.count || 0,
+      awaiting_review: awaitingReview,
       weekly_added: weeklyAddedResult.count || 0,
     }
 

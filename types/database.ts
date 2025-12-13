@@ -5,6 +5,7 @@ export interface Article {
   url: string
   date: string
   title: string
+  text?: string
   updated_at: string
   company: string
   buyer: string
