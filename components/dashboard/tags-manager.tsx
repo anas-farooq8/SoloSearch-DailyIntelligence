@@ -44,6 +44,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [creatingTag, setCreatingTag] = useState(false)
   const [updatingTagId, setUpdatingTagId] = useState<string | null>(null)
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null)
+  const [localTags, setLocalTags] = useState<Tag[]>(tags)
 
   const handleCreateTag = async () => {
     if (!newTagName.trim() || creatingTag) return
@@ -60,10 +61,13 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
       })
 
       if (!response.ok) throw new Error("Failed to create tag")
-
+      
+      const newTag = await response.json()
+      
+      // Update local state only
+      setLocalTags([...localTags, newTag])
       setNewTagName("")
       setNewTagColor(colorOptions[0])
-      await onUpdate()
     } catch (error) {
       console.error("Error creating tag:", error)
       alert("Failed to create tag. Please try again.")
@@ -89,8 +93,9 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
       if (!response.ok) throw new Error("Failed to update tag")
 
+      // Update local state only
+      setLocalTags(localTags.map(t => t.id === editingTag.id ? editingTag : t))
       setEditingTag(null)
-      await onUpdate()
     } catch (error) {
       console.error("Error updating tag:", error)
       alert("Failed to update tag. Please try again.")
@@ -100,7 +105,6 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   }
 
   const handleDeleteTag = async (tagId: string) => {
-    if (!confirm("Are you sure you want to delete this tag?")) return
     setDeletingTagId(tagId)
 
     try {
@@ -110,7 +114,8 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
       if (!response.ok) throw new Error("Failed to delete tag")
 
-      await onUpdate()
+      // Update local state only
+      setLocalTags(localTags.filter(t => t.id !== tagId))
     } catch (error) {
       console.error("Error deleting tag:", error)
       alert("Failed to delete tag. Please try again.")
@@ -125,8 +130,20 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
     }
   }
 
+  const handleEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && editingTag && updatingTagId === null) {
+      handleUpdateTag()
+    }
+  }
+
+  const handleClose = () => {
+    // Only refetch when closing
+    onUpdate()
+    onClose()
+  }
+
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Manage Tags</DialogTitle>
@@ -174,7 +191,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
           <div className="space-y-2">
             <Label>Existing Tags</Label>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {tags.map((tag) => (
+              {localTags.map((tag) => (
                 <div
                   key={tag.id}
                   className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
@@ -185,7 +202,10 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
                         <Input
                           value={editingTag.name}
                           onChange={(e) => setEditingTag({ ...editingTag, name: e.target.value })}
+                          onKeyPress={handleEditKeyPress}
                           className="h-8 flex-1"
+                          autoFocus
+                          disabled={updatingTagId === tag.id}
                         />
                         <div className="flex gap-1">
                           <Button 
