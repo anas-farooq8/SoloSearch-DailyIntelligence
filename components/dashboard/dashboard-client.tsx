@@ -179,7 +179,33 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const handleTagsChange = (updatedTags: Tag[]) => {
     // Update local state with new tags without refetching from server
     if (dashboardData) {
-      mutateDashboard({ ...dashboardData, tags: updatedTags }, false)
+      // Find which tags were deleted (in old but not in new)
+      const deletedTagIds = dashboardData.tags
+        .filter(oldTag => !updatedTags.find(newTag => newTag.id === oldTag.id))
+        .map(tag => tag.id)
+      
+      // Update articles to reflect tag changes
+      const updatedArticles = dashboardData.articles.map(article => {
+        let articleTags = article.tags || []
+        
+        // Remove deleted tags from articles
+        if (deletedTagIds.length > 0) {
+          articleTags = articleTags.filter(tag => !deletedTagIds.includes(tag.id))
+        }
+        
+        // Update edited tags (name/color changes) in articles
+        articleTags = articleTags.map(articleTag => {
+          const updatedTag = updatedTags.find(t => t.id === articleTag.id)
+          return updatedTag || articleTag
+        })
+        
+        return {
+          ...article,
+          tags: articleTags
+        }
+      })
+      
+      mutateDashboard({ ...dashboardData, tags: updatedTags, articles: updatedArticles }, false)
     }
   }
 
