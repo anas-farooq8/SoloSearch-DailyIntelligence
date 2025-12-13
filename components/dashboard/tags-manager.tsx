@@ -45,6 +45,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [updatingTagId, setUpdatingTagId] = useState<string | null>(null)
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null)
   const [localTags, setLocalTags] = useState<Tag[]>(tags)
+  const [hasChanges, setHasChanges] = useState(false)
 
   const handleCreateTag = async () => {
     if (!newTagName.trim() || creatingTag) return
@@ -68,6 +69,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
       setLocalTags([...localTags, newTag])
       setNewTagName("")
       setNewTagColor(colorOptions[0])
+      setHasChanges(true) // Mark that changes were made
     } catch (error) {
       console.error("Error creating tag:", error)
       alert("Failed to create tag. Please try again.")
@@ -96,6 +98,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
       // Update local state only
       setLocalTags(localTags.map(t => t.id === editingTag.id ? editingTag : t))
       setEditingTag(null)
+      setHasChanges(true) // Mark that changes were made
     } catch (error) {
       console.error("Error updating tag:", error)
       alert("Failed to update tag. Please try again.")
@@ -116,6 +119,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
       // Update local state only
       setLocalTags(localTags.filter(t => t.id !== tagId))
+      setHasChanges(true) // Mark that changes were made
     } catch (error) {
       console.error("Error deleting tag:", error)
       alert("Failed to delete tag. Please try again.")
@@ -137,8 +141,10 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   }
 
   const handleClose = () => {
-    // Only refetch when closing
-    onUpdate()
+    // Only refetch if changes were made
+    if (hasChanges) {
+      onUpdate()
+    }
     onClose()
   }
 

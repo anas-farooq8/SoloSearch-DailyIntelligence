@@ -143,10 +143,36 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           method: "DELETE",
         })
       }
-      // Refresh all dashboard data
-      mutateDashboard()
+      
+      // Optimistically update local state
+      if (dashboardData) {
+        const updatedArticles = dashboardData.articles.map(article => {
+          if (article.id === articleId) {
+            const tag = dashboardData.tags.find(t => t.id === tagId)
+            if (!tag) return article
+            
+            if (action === "add") {
+              return {
+                ...article,
+                tags: [...(article.tags || []), tag]
+              }
+            } else {
+              return {
+                ...article,
+                tags: (article.tags || []).filter(t => t.id !== tagId)
+              }
+            }
+          }
+          return article
+        })
+        
+        // Update cache optimistically
+        mutateDashboard({ ...dashboardData, articles: updatedArticles }, false)
+      }
     } catch (error) {
       console.error("Error updating tag:", error)
+      // Revert on error
+      mutateDashboard()
     }
   }
 
