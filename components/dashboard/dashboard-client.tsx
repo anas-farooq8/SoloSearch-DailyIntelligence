@@ -130,6 +130,15 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     setPage(0) // Reset to first page when filters change
   }, [])
 
+  // Helper function to recalculate awaiting_review KPI
+  const recalculateKPIs = (articles: Article[], currentKPIs: KPIStats): KPIStats => {
+    const awaitingReview = articles.filter(article => !article.tags || article.tags.length === 0).length
+    return {
+      ...currentKPIs,
+      awaiting_review: awaitingReview
+    }
+  }
+
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
     try {
       if (action === "add") {
@@ -166,8 +175,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           return article
         })
         
+        // Recalculate KPIs with updated articles
+        const updatedKPIs = recalculateKPIs(updatedArticles, dashboardData.kpis)
+        
         // Update cache optimistically without refetching
-        mutateDashboard({ ...dashboardData, articles: updatedArticles }, false)
+        mutateDashboard({ ...dashboardData, articles: updatedArticles, kpis: updatedKPIs }, false)
       }
     } catch (error) {
       console.error("Error updating tag:", error)
@@ -205,7 +217,10 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         }
       })
       
-      mutateDashboard({ ...dashboardData, tags: updatedTags, articles: updatedArticles }, false)
+      // Recalculate KPIs with updated articles
+      const updatedKPIs = recalculateKPIs(updatedArticles, dashboardData.kpis)
+      
+      mutateDashboard({ ...dashboardData, tags: updatedTags, articles: updatedArticles, kpis: updatedKPIs }, false)
     }
   }
 
