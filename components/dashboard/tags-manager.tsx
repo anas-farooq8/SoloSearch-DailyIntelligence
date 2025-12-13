@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,10 +44,10 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [loading, setLoading] = useState(false)
   const [optimisticTags, setOptimisticTags] = useState<Tag[]>(tags)
 
-  // Sync with props when tags change
-  useState(() => {
+  // Sync with props when tags change from server
+  useEffect(() => {
     setOptimisticTags(tags)
-  })
+  }, [tags])
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) return
@@ -79,7 +79,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
       
       if (!response.ok) throw new Error("Failed to create tag")
       
-      // Background update
+      // Background update - will sync via useEffect
       onUpdate()
     } catch (error) {
       console.error("Error creating tag:", error)
@@ -90,6 +90,11 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
   const handleUpdateTag = async () => {
     if (!editingTag) return
+    
+    // Don't allow updating temporary tags
+    if (editingTag.id.startsWith('temp-')) {
+      return
+    }
     
     // Optimistic update - update tag immediately
     const oldTags = [...optimisticTags]
@@ -124,6 +129,11 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   }
 
   const handleDeleteTag = async (tagId: string) => {
+    // Don't allow deleting temporary tags
+    if (tagId.startsWith('temp-')) {
+      return
+    }
+    
     // Optimistic update - remove tag immediately
     const oldTags = [...optimisticTags]
     setOptimisticTags(optimisticTags.filter(t => t.id !== tagId))
@@ -229,14 +239,15 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
                         <div>
                           <span className="font-medium text-slate-900">{tag.name}</span>
                           {tag.is_default && <span className="text-xs text-slate-500 ml-2">(default)</span>}
+                          {tag.id.startsWith('temp-') && <span className="text-xs text-slate-400 ml-2">(saving...)</span>}
                         </div>
                       </div>
-                      {!tag.is_default && (
+                      {!tag.is_default && !tag.id.startsWith('temp-') && (
                         <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(tag)}>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(tag)} className="cursor-pointer">
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteTag(tag.id)} disabled={loading}>
+                          <Button size="sm" variant="ghost" onClick={() => handleDeleteTag(tag.id)} className="cursor-pointer">
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
