@@ -32,23 +32,23 @@ USING (is_default = FALSE);
 -- Enable RLS on article_tags table
 ALTER TABLE article_tags ENABLE ROW LEVEL SECURITY;
 
--- Article Tags: Users can view their own tags
-CREATE POLICY "Users can view their own article tags"
+-- Article Tags: All authenticated users can view all article tags (shared system)
+CREATE POLICY "Authenticated users can view all article tags"
 ON article_tags FOR SELECT
 TO authenticated
-USING (auth.uid() = user_id);
+USING (true);
 
--- Article Tags: Users can insert their own tags
-CREATE POLICY "Users can insert their own article tags"
+-- Article Tags: All authenticated users can add tags to articles (shared system)
+CREATE POLICY "Authenticated users can add article tags"
 ON article_tags FOR INSERT
 TO authenticated
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK (true);
 
--- Article Tags: Users can delete their own tags
-CREATE POLICY "Users can delete their own article tags"
+-- Article Tags: All authenticated users can remove tags from articles (shared system)
+CREATE POLICY "Authenticated users can delete article tags"
 ON article_tags FOR DELETE
 TO authenticated
-USING (auth.uid() = user_id);
+USING (true);
 
 -- Enable RLS on articles table (assuming it exists)
 ALTER TABLE articles ENABLE ROW LEVEL SECURITY;

@@ -30,7 +30,6 @@ export interface ArticleTag {
   id: string
   article_id: string
   tag_id: string
-  user_id: string
 }
 
 export interface KPIStats {

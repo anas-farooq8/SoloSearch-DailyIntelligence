@@ -2,9 +2,8 @@
 -- HELPER FUNCTIONS
 -- ============================================
 
--- Function to get articles with their tags for a user
+-- Function to get articles with their tags (shared tagging system)
 CREATE OR REPLACE FUNCTION get_articles_with_tags(
-  p_user_id UUID,
   p_page INTEGER DEFAULT 0,
   p_page_size INTEGER DEFAULT 20,
   p_search TEXT DEFAULT NULL,
@@ -63,7 +62,7 @@ BEGIN
         SELECT jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'color', t.color))
         FROM article_tags at
         JOIN tags t ON t.id = at.tag_id
-        WHERE at.article_id = a.id AND at.user_id = p_user_id
+        WHERE at.article_id = a.id
       ),
       '[]'::jsonb
     ) as tags
@@ -80,7 +79,6 @@ BEGIN
       OR EXISTS (
         SELECT 1 FROM article_tags at 
         WHERE at.article_id = a.id 
-        AND at.user_id = p_user_id 
         AND at.tag_id = ANY(p_tag_ids)
       )
     )
@@ -92,7 +90,6 @@ $$;
 
 -- Function to count articles matching filters
 CREATE OR REPLACE FUNCTION count_filtered_articles(
-  p_user_id UUID,
   p_search TEXT DEFAULT NULL,
   p_min_score INTEGER DEFAULT NULL,
   p_max_score INTEGER DEFAULT NULL,
@@ -122,7 +119,6 @@ BEGIN
       OR EXISTS (
         SELECT 1 FROM article_tags at 
         WHERE at.article_id = a.id 
-        AND at.user_id = p_user_id 
         AND at.tag_id = ANY(p_tag_ids)
       )
     );
@@ -132,7 +128,7 @@ END;
 $$;
 
 -- Function to get KPI stats
-CREATE OR REPLACE FUNCTION get_dashboard_kpis(p_user_id UUID)
+CREATE OR REPLACE FUNCTION get_dashboard_kpis()
 RETURNS TABLE (
   total_today INTEGER,
   high_priority_today INTEGER,
@@ -148,7 +144,7 @@ BEGIN
     (SELECT COUNT(*)::INTEGER FROM articles WHERE status = 'processed' AND DATE(updated_at) = CURRENT_DATE) as total_today,
     (SELECT COUNT(*)::INTEGER FROM articles WHERE status = 'processed' AND DATE(updated_at) = CURRENT_DATE AND lead_score >= 8) as high_priority_today,
     (SELECT COUNT(*)::INTEGER FROM articles a WHERE status = 'processed' 
-      AND NOT EXISTS (SELECT 1 FROM article_tags at WHERE at.article_id = a.id AND at.user_id = p_user_id)) as awaiting_review,
+      AND NOT EXISTS (SELECT 1 FROM article_tags at WHERE at.article_id = a.id)) as awaiting_review,
     (SELECT COUNT(*)::INTEGER FROM articles WHERE status = 'processed' AND updated_at >= NOW() - INTERVAL '7 days') as weekly_added;
 END;
 $$;

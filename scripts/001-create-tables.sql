@@ -27,6 +27,7 @@ ON CONFLICT (name) DO NOTHING;
 
 -- ============================================
 -- ARTICLE_TAGS JUNCTION TABLE
+-- Tags are shared across all users - no user_id column
 -- ============================================
 CREATE TABLE IF NOT EXISTS article_tags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

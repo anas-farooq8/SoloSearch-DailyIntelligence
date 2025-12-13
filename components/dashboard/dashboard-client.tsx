@@ -29,10 +29,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const [showTagsManager, setShowTagsManager] = useState(false)
 
   // Fetch KPIs
-  const { data: kpis, isLoading: kpisLoading } = useSWR<KPIStats>(["kpis", userId], async () => {
-    const { data, error } = await supabase.rpc("get_dashboard_kpis", {
-      p_user_id: userId,
-    })
+  const { data: kpis, isLoading: kpisLoading } = useSWR<KPIStats>(["kpis"], async () => {
+    const { data, error } = await supabase.rpc("get_dashboard_kpis")
     if (error) throw error
     return data?.[0] || { total_today: 0, high_priority_today: 0, awaiting_review: 0, weekly_added: 0 }
   })
@@ -63,9 +61,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     data: articlesData,
     isLoading: articlesLoading,
     mutate: mutateArticles,
-  } = useSWR(["articles", userId, page, filters], async () => {
+  } = useSWR(["articles", page, filters], async () => {
     const { data: articles, error: articlesError } = await supabase.rpc("get_articles_with_tags", {
-      p_user_id: userId,
       p_page: page,
       p_page_size: 20,
       p_search: filters.search || null,
@@ -80,7 +77,6 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     if (articlesError) throw articlesError
 
     const { data: countData, error: countError } = await supabase.rpc("count_filtered_articles", {
-      p_user_id: userId,
       p_search: filters.search || null,
       p_min_score: filters.minScore,
       p_max_score: filters.maxScore,
@@ -108,10 +104,9 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       await supabase.from("article_tags").insert({
         article_id: articleId,
         tag_id: tagId,
-        user_id: userId,
       })
     } else {
-      await supabase.from("article_tags").delete().match({ article_id: articleId, tag_id: tagId, user_id: userId })
+      await supabase.from("article_tags").delete().match({ article_id: articleId, tag_id: tagId })
     }
     mutateArticles()
   }
