@@ -1,28 +1,109 @@
 import type { Article, Filters } from "@/types/database"
-import * as XLSX from "xlsx"
+import ExcelJS from "exceljs"
 
 export async function exportToExcel(articles: Article[], filters: Filters) {
-  const data = articles.map((article) => ({
-    Score: article.lead_score,
-    Title: article.title,
-    Company: article.company,
-    Buyer: article.buyer || "",
-    Sectors: (article.sector || []).join(", "),
-    Signals: (article.trigger_signal || []).join(", "),
-    Summary: article.ai_summary || "",
-    Amount: article.amount || "",
-    Source: article.source,
-    URL: article.url,
-    Date: new Date(article.date).toLocaleDateString(),
-    Region: article.location_region || "",
-    Country: article.location_country || "",
-    Tags: (article.tags || []).map((t) => t.name).join(", "),
-  }))
+  // Create a new workbook and worksheet
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet("Leads")
 
-  const worksheet = XLSX.utils.json_to_sheet(data)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Leads")
+  // Define columns with styling
+  worksheet.columns = [
+    { header: "Score", key: "score", width: 10 },
+    { header: "Title", key: "title", width: 40 },
+    { header: "Company", key: "company", width: 25 },
+    { header: "Buyer", key: "buyer", width: 25 },
+    { header: "Sectors", key: "sectors", width: 30 },
+    { header: "Signals", key: "signals", width: 30 },
+    { header: "Summary", key: "summary", width: 50 },
+    { header: "Amount", key: "amount", width: 15 },
+    { header: "Source", key: "source", width: 20 },
+    { header: "URL", key: "url", width: 40 },
+    { header: "Date", key: "date", width: 15 },
+    { header: "Region", key: "region", width: 20 },
+    { header: "Country", key: "country", width: 12 },
+    { header: "Tags", key: "tags", width: 25 },
+  ]
 
+  // Style the header row
+  worksheet.getRow(1).font = { bold: true, size: 12 }
+  worksheet.getRow(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF1E293B" }, // Slate-800
+  }
+  worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } }
+  worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" }
+  worksheet.getRow(1).height = 20
+
+  // Add data rows
+  articles.forEach((article) => {
+    const row = worksheet.addRow({
+      score: article.lead_score,
+      title: article.title,
+      company: article.company,
+      buyer: article.buyer || "",
+      sectors: (article.sector || []).join(", "),
+      signals: (article.trigger_signal || []).join(", "),
+      summary: article.ai_summary || "",
+      amount: article.amount || "",
+      source: article.source,
+      url: article.url,
+      date: new Date(article.date).toLocaleDateString(),
+      region: article.location_region || "",
+      country: article.location_country || "",
+      tags: (article.tags || []).map((t) => t.name).join(", "),
+    })
+
+    // Color code rows based on lead score
+    const score = article.lead_score
+    if (score >= 8) {
+      // High priority - light red
+      row.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFECACA" }, // Red-200
+      }
+    } else if (score >= 6) {
+      // High interest - light green
+      row.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFD9F99D" }, // Lime-200
+      }
+    } else if (score >= 4) {
+      // Monitor - light blue
+      row.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFBAE6FD" }, // Sky-200
+      }
+    }
+
+    // Make URL clickable
+    const urlCell = row.getCell("url")
+    urlCell.value = {
+      text: article.url,
+      hyperlink: article.url,
+    }
+    urlCell.font = { color: { argb: "FF2563EB" }, underline: true }
+  })
+
+  // Auto-filter on all columns
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: 14 },
+  }
+
+  // Generate filename and download
   const filename = `leads-export-${new Date().toISOString().split("T")[0]}.xlsx`
-  XLSX.writeFile(workbook, filename)
+  
+  // Write to browser (client-side download)
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
 }

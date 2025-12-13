@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,7 +26,6 @@ const colorOptions = [
 ]
 
 export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
-  const supabase = createClient()
   const [newTagName, setNewTagName] = useState("")
   const [newTagColor, setNewTagColor] = useState(colorOptions[0])
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
@@ -37,34 +35,64 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
     if (!newTagName.trim()) return
     setLoading(true)
 
-    await supabase.from("tags").insert({
-      name: newTagName.trim(),
-      color: newTagColor,
-      is_default: false,
-    })
+    try {
+      await fetch("/api/dashboard/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newTagName.trim(),
+          color: newTagColor,
+        }),
+      })
 
-    setNewTagName("")
-    setNewTagColor(colorOptions[0])
-    onUpdate()
-    setLoading(false)
+      setNewTagName("")
+      setNewTagColor(colorOptions[0])
+      onUpdate()
+    } catch (error) {
+      console.error("Error creating tag:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUpdateTag = async () => {
     if (!editingTag) return
     setLoading(true)
 
-    await supabase.from("tags").update({ name: editingTag.name, color: editingTag.color }).eq("id", editingTag.id)
+    try {
+      await fetch("/api/dashboard/tags", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTag.id,
+          name: editingTag.name,
+          color: editingTag.color,
+        }),
+      })
 
-    setEditingTag(null)
-    onUpdate()
-    setLoading(false)
+      setEditingTag(null)
+      onUpdate()
+    } catch (error) {
+      console.error("Error updating tag:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDeleteTag = async (tagId: string) => {
     setLoading(true)
-    await supabase.from("tags").delete().eq("id", tagId)
-    onUpdate()
-    setLoading(false)
+    
+    try {
+      await fetch(`/api/dashboard/tags?id=${tagId}`, {
+        method: "DELETE",
+      })
+      
+      onUpdate()
+    } catch (error) {
+      console.error("Error deleting tag:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

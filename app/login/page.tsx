@@ -17,12 +17,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  const validateEmail = (email: string): boolean => {
+    if (!email) {
+      setEmailError("Email is required")
+      return false
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setEmailError("Please enter a valid email address")
+      return false
+    }
+    setEmailError(null)
+    return true
+  }
+
+  const validatePassword = (password: string): boolean => {
+    if (!password) {
+      setPasswordError("Password is required")
+      return false
+    }
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters")
+      return false
+    }
+    setPasswordError(null)
+    return true
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    // Validate fields
+    const isEmailValid = validateEmail(email)
+    const isPasswordValid = validatePassword(password)
+
+    if (!isEmailValid || !isPasswordValid) {
+      return
+    }
+
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -61,10 +99,16 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (emailError) validateEmail(e.target.value)
+                }}
+                onBlur={() => validateEmail(email)}
                 required
                 disabled={loading}
+                className={emailError ? "border-red-500" : ""}
               />
+              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -73,12 +117,18 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (passwordError) validatePassword(e.target.value)
+                }}
+                onBlur={() => validatePassword(password)}
                 required
                 disabled={loading}
+                className={passwordError ? "border-red-500" : ""}
               />
+              {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

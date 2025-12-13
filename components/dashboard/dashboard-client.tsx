@@ -14,6 +14,16 @@ interface DashboardClientProps {
   userId: string
 }
 
+// API fetcher
+const fetcher = async (url: string, options?: RequestInit) => {
+  const res = await fetch(url, options)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || "An error occurred")
+  }
+  return res.json()
+}
+
 export function DashboardClient({ userId }: DashboardClientProps) {
   const supabase = createClient()
   const [page, setPage] = useState(0)
@@ -28,71 +38,46 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
 
-  // Fetch KPIs
-  const { data: kpis, isLoading: kpisLoading } = useSWR<KPIStats>(["kpis"], async () => {
-    const { data, error } = await supabase.rpc("get_dashboard_kpis")
-    if (error) throw error
-    return data?.[0] || { total_today: 0, high_priority_today: 0, awaiting_review: 0, weekly_added: 0 }
+  // Fetch KPIs - only once, not dependent on filters
+  const { data: kpis, isLoading: kpisLoading } = useSWR<KPIStats>("/api/dashboard/kpis", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000, // Cache for 1 minute
   })
 
-  // Fetch tags
-  const { data: tags, mutate: mutateTags } = useSWR<Tag[]>(["tags"], async () => {
-    const { data, error } = await supabase.from("tags").select("*").order("name")
-    if (error) throw error
-    return data || []
+  // Fetch tags - only once, not dependent on filters
+  const { data: tags, mutate: mutateTags } = useSWR<Tag[]>("/api/dashboard/tags", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000, // Cache for 30 seconds
   })
 
-  // Fetch filter options
-  const { data: filterOptions } = useSWR(["filter-options"], async () => {
-    const [sectorsRes, triggersRes, countriesRes] = await Promise.all([
-      supabase.rpc("get_distinct_sectors"),
-      supabase.rpc("get_distinct_triggers"),
-      supabase.rpc("get_distinct_countries"),
-    ])
-    return {
-      sectors: (sectorsRes.data || []).filter(Boolean),
-      triggers: (triggersRes.data || []).filter(Boolean),
-      countries: (countriesRes.data || []).filter(Boolean),
-    }
+  // Fetch filter options - only once, not dependent on filters
+  const { data: filterOptions } = useSWR<{
+    sectors: string[]
+    triggers: string[]
+    countries: string[]
+  }>("/api/dashboard/filter-options", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 300000, // Cache for 5 minutes
   })
 
-  // Fetch articles with filters
+  // Fetch articles with filters - depends on page and filters
   const {
     data: articlesData,
     isLoading: articlesLoading,
     mutate: mutateArticles,
-  } = useSWR(["articles", page, filters], async () => {
-    const { data: articles, error: articlesError } = await supabase.rpc("get_articles_with_tags", {
-      p_page: page,
-      p_page_size: 20,
-      p_search: filters.search || null,
-      p_min_score: filters.minScore,
-      p_max_score: filters.maxScore,
-      p_sectors: filters.sectors.length > 0 ? filters.sectors : null,
-      p_triggers: filters.triggers.length > 0 ? filters.triggers : null,
-      p_country: filters.country,
-      p_tag_ids: filters.tagIds.length > 0 ? filters.tagIds : null,
-    })
-
-    if (articlesError) throw articlesError
-
-    const { data: countData, error: countError } = await supabase.rpc("count_filtered_articles", {
-      p_search: filters.search || null,
-      p_min_score: filters.minScore,
-      p_max_score: filters.maxScore,
-      p_sectors: filters.sectors.length > 0 ? filters.sectors : null,
-      p_triggers: filters.triggers.length > 0 ? filters.triggers : null,
-      p_country: filters.country,
-      p_tag_ids: filters.tagIds.length > 0 ? filters.tagIds : null,
-    })
-
-    if (countError) throw countError
-
-    return {
-      articles: (articles || []) as Article[],
-      total: countData || 0,
+  } = useSWR<{ articles: Article[]; total: number }>(
+    ["/api/dashboard/articles", page, filters],
+    ([url]) =>
+      fetcher(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ page, pageSize: 20, filters }),
+      }),
+    {
+      keepPreviousData: true, // Keep previous data while loading new data
+      dedupingInterval: 2000, // Dedupe requests within 2 seconds
     }
-  })
+  )
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }))
@@ -100,15 +85,22 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   }, [])
 
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
-    if (action === "add") {
-      await supabase.from("article_tags").insert({
-        article_id: articleId,
-        tag_id: tagId,
-      })
-    } else {
-      await supabase.from("article_tags").delete().match({ article_id: articleId, tag_id: tagId })
+    try {
+      if (action === "add") {
+        await fetcher("/api/dashboard/article-tags", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ article_id: articleId, tag_id: tagId }),
+        })
+      } else {
+        await fetcher(`/api/dashboard/article-tags?article_id=${articleId}&tag_id=${tagId}`, {
+          method: "DELETE",
+        })
+      }
+      mutateArticles()
+    } catch (error) {
+      console.error("Error updating tag:", error)
     }
-    mutateArticles()
   }
 
   const handleSignOut = async () => {

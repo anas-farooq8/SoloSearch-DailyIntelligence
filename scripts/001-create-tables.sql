@@ -31,7 +31,7 @@ ON CONFLICT (name) DO NOTHING;
 -- ============================================
 CREATE TABLE IF NOT EXISTS article_tags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  article_id UUID NOT NULL,
+  article_id BIGINT NOT NULL,
   tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(article_id, tag_id)
