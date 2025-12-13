@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Trash2, Edit2, Plus, X } from "lucide-react"
+import { Trash2, Edit2, Plus, X, Loader2 } from "lucide-react"
 import type { Tag } from "@/types/database"
 
 interface TagsManagerProps {
@@ -41,116 +41,87 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [newTagName, setNewTagName] = useState("")
   const [newTagColor, setNewTagColor] = useState(colorOptions[0])
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [optimisticTags, setOptimisticTags] = useState<Tag[]>(tags)
-
-  // Sync with props when tags change from server
-  useEffect(() => {
-    setOptimisticTags(tags)
-  }, [tags])
+  const [creatingTag, setCreatingTag] = useState(false)
+  const [updatingTagId, setUpdatingTagId] = useState<string | null>(null)
+  const [deletingTagId, setDeletingTagId] = useState<string | null>(null)
 
   const handleCreateTag = async () => {
-    if (!newTagName.trim()) return
-    
-    // Optimistic update - add tag immediately
-    const tempId = `temp-${Date.now()}`
-    const newTag: Tag = {
-      id: tempId,
-      name: newTagName.trim(),
-      color: newTagColor,
-      is_default: false,
-    }
-    setOptimisticTags([...optimisticTags, newTag])
-    
-    const tagName = newTagName.trim()
-    const tagColor = newTagColor
-    setNewTagName("")
-    setNewTagColor(colorOptions[0])
+    if (!newTagName.trim() || creatingTag) return
+    setCreatingTag(true)
 
     try {
       const response = await fetch("/api/dashboard/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: tagName,
-          color: tagColor,
+          name: newTagName.trim(),
+          color: newTagColor,
         }),
       })
-      
+
       if (!response.ok) throw new Error("Failed to create tag")
-      
-      // Background update - will sync via useEffect
-      onUpdate()
+
+      setNewTagName("")
+      setNewTagColor(colorOptions[0])
+      await onUpdate()
     } catch (error) {
       console.error("Error creating tag:", error)
-      // Rollback on error
-      setOptimisticTags(optimisticTags.filter(t => t.id !== tempId))
+      alert("Failed to create tag. Please try again.")
+    } finally {
+      setCreatingTag(false)
     }
   }
 
   const handleUpdateTag = async () => {
     if (!editingTag) return
-    
-    // Don't allow updating temporary tags
-    if (editingTag.id.startsWith('temp-')) {
-      return
-    }
-    
-    // Optimistic update - update tag immediately
-    const oldTags = [...optimisticTags]
-    setOptimisticTags(optimisticTags.map(t => 
-      t.id === editingTag.id ? editingTag : t
-    ))
-    
-    const tagToUpdate = { ...editingTag }
-    setEditingTag(null)
+    setUpdatingTagId(editingTag.id)
 
     try {
       const response = await fetch("/api/dashboard/tags", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: tagToUpdate.id,
-          name: tagToUpdate.name,
-          color: tagToUpdate.color,
+          id: editingTag.id,
+          name: editingTag.name,
+          color: editingTag.color,
         }),
       })
-      
+
       if (!response.ok) throw new Error("Failed to update tag")
-      
-      // Background update
-      onUpdate()
+
+      setEditingTag(null)
+      await onUpdate()
     } catch (error) {
       console.error("Error updating tag:", error)
-      // Rollback on error
-      setOptimisticTags(oldTags)
-      setEditingTag(tagToUpdate)
+      alert("Failed to update tag. Please try again.")
+    } finally {
+      setUpdatingTagId(null)
     }
   }
 
   const handleDeleteTag = async (tagId: string) => {
-    // Don't allow deleting temporary tags
-    if (tagId.startsWith('temp-')) {
-      return
-    }
-    
-    // Optimistic update - remove tag immediately
-    const oldTags = [...optimisticTags]
-    setOptimisticTags(optimisticTags.filter(t => t.id !== tagId))
-    
+    if (!confirm("Are you sure you want to delete this tag?")) return
+    setDeletingTagId(tagId)
+
     try {
       const response = await fetch(`/api/dashboard/tags?id=${tagId}`, {
         method: "DELETE",
       })
-      
+
       if (!response.ok) throw new Error("Failed to delete tag")
-      
-      // Background update
-      onUpdate()
+
+      await onUpdate()
     } catch (error) {
       console.error("Error deleting tag:", error)
-      // Rollback on error
-      setOptimisticTags(oldTags)
+      alert("Failed to delete tag. Please try again.")
+    } finally {
+      setDeletingTagId(null)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !creatingTag) {
+      handleCreateTag()
     }
   }
 
@@ -166,9 +137,19 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
           <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
             <Label>Create New Tag</Label>
             <div className="flex gap-2">
-              <Input placeholder="Tag name" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
-              <Button onClick={handleCreateTag} disabled={!newTagName.trim()} className="cursor-pointer">
-                <Plus className="h-4 w-4" />
+              <Input 
+                placeholder="Tag name" 
+                value={newTagName} 
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={creatingTag}
+              />
+              <Button 
+                onClick={handleCreateTag} 
+                disabled={!newTagName.trim() || creatingTag} 
+                className="cursor-pointer"
+              >
+                {creatingTag ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </Button>
             </div>
             <div>
@@ -193,7 +174,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
           <div className="space-y-2">
             <Label>Existing Tags</Label>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {optimisticTags.map((tag) => (
+              {tags.map((tag) => (
                 <div
                   key={tag.id}
                   className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
@@ -207,10 +188,25 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
                           className="h-8 flex-1"
                         />
                         <div className="flex gap-1">
-                          <Button size="sm" onClick={handleUpdateTag} className="cursor-pointer">
-                            Save
+                          <Button 
+                            size="sm" 
+                            onClick={handleUpdateTag} 
+                            disabled={updatingTagId === tag.id}
+                            className="cursor-pointer"
+                          >
+                            {updatingTagId === tag.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Save"
+                            )}
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(null)} className="cursor-pointer">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => setEditingTag(null)} 
+                            className="cursor-pointer"
+                            disabled={updatingTagId === tag.id}
+                          >
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -239,16 +235,31 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
                         <div>
                           <span className="font-medium text-slate-900">{tag.name}</span>
                           {tag.is_default && <span className="text-xs text-slate-500 ml-2">(default)</span>}
-                          {tag.id.startsWith('temp-') && <span className="text-xs text-slate-400 ml-2">(saving...)</span>}
                         </div>
                       </div>
-                      {!tag.is_default && !tag.id.startsWith('temp-') && (
+                      {!tag.is_default && (
                         <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(tag)} className="cursor-pointer">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => setEditingTag(tag)} 
+                            className="cursor-pointer"
+                            disabled={deletingTagId === tag.id || updatingTagId !== null}
+                          >
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteTag(tag.id)} className="cursor-pointer">
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleDeleteTag(tag.id)} 
+                            className="cursor-pointer"
+                            disabled={deletingTagId !== null || updatingTagId !== null}
+                          >
+                            {deletingTagId === tag.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            )}
                           </Button>
                         </div>
                       )}
