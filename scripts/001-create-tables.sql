@@ -32,20 +32,10 @@ CREATE TABLE IF NOT EXISTS article_tags (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   article_id UUID NOT NULL,
   tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(article_id, tag_id, user_id)
+  UNIQUE(article_id, tag_id)
 );
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_article_tags_article_id ON article_tags(article_id);
-CREATE INDEX IF NOT EXISTS idx_article_tags_user_id ON article_tags(user_id);
 CREATE INDEX IF NOT EXISTS idx_article_tags_tag_id ON article_tags(tag_id);
-
--- ============================================
--- ARTICLES TABLE INDEX (for filtering)
--- ============================================
-CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
-CREATE INDEX IF NOT EXISTS idx_articles_updated_at ON articles(updated_at DESC);
-CREATE INDEX IF NOT EXISTS idx_articles_lead_score ON articles(lead_score);
-CREATE INDEX IF NOT EXISTS idx_articles_company ON articles(company);
