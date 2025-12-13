@@ -11,7 +11,7 @@ import type { Tag } from "@/types/database"
 interface TagsManagerProps {
   tags: Tag[]
   onClose: () => void
-  onUpdate: () => void
+  onTagsChange: (updatedTags: Tag[]) => void
 }
 
 const colorOptions = [
@@ -37,7 +37,7 @@ const colorOptions = [
   "#57534E", // Warm Gray
 ]
 
-export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
+export function TagsManager({ tags, onClose, onTagsChange }: TagsManagerProps) {
   const [newTagName, setNewTagName] = useState("")
   const [newTagColor, setNewTagColor] = useState(colorOptions[0])
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
@@ -45,7 +45,6 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [updatingTagId, setUpdatingTagId] = useState<string | null>(null)
   const [deletingTagId, setDeletingTagId] = useState<string | null>(null)
   const [localTags, setLocalTags] = useState<Tag[]>(tags)
-  const [hasChanges, setHasChanges] = useState(false)
 
   const handleCreateTag = async () => {
     if (!newTagName.trim() || creatingTag) return
@@ -65,11 +64,14 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
       
       const newTag = await response.json()
       
-      // Update local state only
-      setLocalTags([...localTags, newTag])
+      // Update local state
+      const updatedTags = [...localTags, newTag]
+      setLocalTags(updatedTags)
       setNewTagName("")
       setNewTagColor(colorOptions[0])
-      setHasChanges(true) // Mark that changes were made
+      
+      // Update parent component's state immediately
+      onTagsChange(updatedTags)
     } catch (error) {
       console.error("Error creating tag:", error)
       alert("Failed to create tag. Please try again.")
@@ -95,10 +97,13 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
       if (!response.ok) throw new Error("Failed to update tag")
 
-      // Update local state only
-      setLocalTags(localTags.map(t => t.id === editingTag.id ? editingTag : t))
+      // Update local state
+      const updatedTags = localTags.map(t => t.id === editingTag.id ? editingTag : t)
+      setLocalTags(updatedTags)
       setEditingTag(null)
-      setHasChanges(true) // Mark that changes were made
+      
+      // Update parent component's state immediately
+      onTagsChange(updatedTags)
     } catch (error) {
       console.error("Error updating tag:", error)
       alert("Failed to update tag. Please try again.")
@@ -117,9 +122,12 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
 
       if (!response.ok) throw new Error("Failed to delete tag")
 
-      // Update local state only
-      setLocalTags(localTags.filter(t => t.id !== tagId))
-      setHasChanges(true) // Mark that changes were made
+      // Update local state
+      const updatedTags = localTags.filter(t => t.id !== tagId)
+      setLocalTags(updatedTags)
+      
+      // Update parent component's state immediately
+      onTagsChange(updatedTags)
     } catch (error) {
       console.error("Error deleting tag:", error)
       alert("Failed to delete tag. Please try again.")
@@ -141,10 +149,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   }
 
   const handleClose = () => {
-    // Only refetch if changes were made
-    if (hasChanges) {
-      onUpdate()
-    }
+    // Just close - no need to refetch since we updated state in real-time
     onClose()
   }
 

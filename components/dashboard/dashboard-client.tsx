@@ -144,7 +144,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         })
       }
       
-      // Optimistically update local state
+      // Optimistically update local state without refetching from server
       if (dashboardData) {
         const updatedArticles = dashboardData.articles.map(article => {
           if (article.id === articleId) {
@@ -166,13 +166,20 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           return article
         })
         
-        // Update cache optimistically
+        // Update cache optimistically without refetching
         mutateDashboard({ ...dashboardData, articles: updatedArticles }, false)
       }
     } catch (error) {
       console.error("Error updating tag:", error)
-      // Revert on error
+      // Revert on error by refetching
       mutateDashboard()
+    }
+  }
+
+  const handleTagsChange = (updatedTags: Tag[]) => {
+    // Update local state with new tags without refetching from server
+    if (dashboardData) {
+      mutateDashboard({ ...dashboardData, tags: updatedTags }, false)
     }
   }
 
@@ -212,7 +219,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         <TagsManager
           tags={dashboardData?.tags || []}
           onClose={() => setShowTagsManager(false)}
-          onUpdate={mutateDashboard}
+          onTagsChange={handleTagsChange}
         />
       )}
     </div>

@@ -21,6 +21,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "article_id and tag_id are required" }, { status: 400 })
     }
 
+    // Check if the tag is already assigned to this article
+    const { data: existing } = await supabase
+      .from("article_tags")
+      .select("id")
+      .eq("article_id", article_id)
+      .eq("tag_id", tag_id)
+      .single()
+
+    // If it already exists, return success (idempotent operation)
+    if (existing) {
+      return NextResponse.json({ success: true, already_exists: true })
+    }
+
     const { error } = await supabase.from("article_tags").insert({
       article_id,
       tag_id,
