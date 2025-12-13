@@ -21,7 +21,6 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   const validateEmail = (email: string): boolean => {
     if (!email) {
@@ -64,6 +63,7 @@ export default function LoginPage() {
 
     setLoading(true)
 
+    const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
