@@ -42,68 +42,105 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
   const [newTagColor, setNewTagColor] = useState(colorOptions[0])
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
   const [loading, setLoading] = useState(false)
+  const [optimisticTags, setOptimisticTags] = useState<Tag[]>(tags)
+
+  // Sync with props when tags change
+  useState(() => {
+    setOptimisticTags(tags)
+  })
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) return
-    setLoading(true)
+    
+    // Optimistic update - add tag immediately
+    const tempId = `temp-${Date.now()}`
+    const newTag: Tag = {
+      id: tempId,
+      name: newTagName.trim(),
+      color: newTagColor,
+      is_default: false,
+    }
+    setOptimisticTags([...optimisticTags, newTag])
+    
+    const tagName = newTagName.trim()
+    const tagColor = newTagColor
+    setNewTagName("")
+    setNewTagColor(colorOptions[0])
 
     try {
-      await fetch("/api/dashboard/tags", {
+      const response = await fetch("/api/dashboard/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newTagName.trim(),
-          color: newTagColor,
+          name: tagName,
+          color: tagColor,
         }),
       })
-
-      setNewTagName("")
-      setNewTagColor(colorOptions[0])
+      
+      if (!response.ok) throw new Error("Failed to create tag")
+      
+      // Background update
       onUpdate()
     } catch (error) {
       console.error("Error creating tag:", error)
-    } finally {
-      setLoading(false)
+      // Rollback on error
+      setOptimisticTags(optimisticTags.filter(t => t.id !== tempId))
     }
   }
 
   const handleUpdateTag = async () => {
     if (!editingTag) return
-    setLoading(true)
+    
+    // Optimistic update - update tag immediately
+    const oldTags = [...optimisticTags]
+    setOptimisticTags(optimisticTags.map(t => 
+      t.id === editingTag.id ? editingTag : t
+    ))
+    
+    const tagToUpdate = { ...editingTag }
+    setEditingTag(null)
 
     try {
-      await fetch("/api/dashboard/tags", {
+      const response = await fetch("/api/dashboard/tags", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: editingTag.id,
-          name: editingTag.name,
-          color: editingTag.color,
+          id: tagToUpdate.id,
+          name: tagToUpdate.name,
+          color: tagToUpdate.color,
         }),
       })
-
-      setEditingTag(null)
+      
+      if (!response.ok) throw new Error("Failed to update tag")
+      
+      // Background update
       onUpdate()
     } catch (error) {
       console.error("Error updating tag:", error)
-    } finally {
-      setLoading(false)
+      // Rollback on error
+      setOptimisticTags(oldTags)
+      setEditingTag(tagToUpdate)
     }
   }
 
   const handleDeleteTag = async (tagId: string) => {
-    setLoading(true)
+    // Optimistic update - remove tag immediately
+    const oldTags = [...optimisticTags]
+    setOptimisticTags(optimisticTags.filter(t => t.id !== tagId))
     
     try {
-      await fetch(`/api/dashboard/tags?id=${tagId}`, {
+      const response = await fetch(`/api/dashboard/tags?id=${tagId}`, {
         method: "DELETE",
       })
       
+      if (!response.ok) throw new Error("Failed to delete tag")
+      
+      // Background update
       onUpdate()
     } catch (error) {
       console.error("Error deleting tag:", error)
-    } finally {
-      setLoading(false)
+      // Rollback on error
+      setOptimisticTags(oldTags)
     }
   }
 
@@ -120,7 +157,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
             <Label>Create New Tag</Label>
             <div className="flex gap-2">
               <Input placeholder="Tag name" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} />
-              <Button onClick={handleCreateTag} disabled={loading || !newTagName.trim()}>
+              <Button onClick={handleCreateTag} disabled={!newTagName.trim()} className="cursor-pointer">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -146,7 +183,7 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
           <div className="space-y-2">
             <Label>Existing Tags</Label>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {tags.map((tag) => (
+              {optimisticTags.map((tag) => (
                 <div
                   key={tag.id}
                   className="flex items-start justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors"
@@ -160,10 +197,10 @@ export function TagsManager({ tags, onClose, onUpdate }: TagsManagerProps) {
                           className="h-8 flex-1"
                         />
                         <div className="flex gap-1">
-                          <Button size="sm" onClick={handleUpdateTag} disabled={loading}>
+                          <Button size="sm" onClick={handleUpdateTag} className="cursor-pointer">
                             Save
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(null)}>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingTag(null)} className="cursor-pointer">
                             <X className="h-4 w-4" />
                           </Button>
                         </div>

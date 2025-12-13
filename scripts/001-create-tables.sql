@@ -69,6 +69,8 @@ create table public.tags (
 
 -- Index for tags
 create index IF not exists idx_tags_name on public.tags using btree (name) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_tags_is_default ON public.tags(is_default) WHERE is_default = true;
+CREATE INDEX IF NOT EXISTS idx_tags_created_at ON public.tags(created_at DESC);
 
 create trigger trg_tags_set_updated_at BEFORE
 update on tags for EACH row
