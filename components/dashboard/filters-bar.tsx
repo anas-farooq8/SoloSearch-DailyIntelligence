@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +25,11 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: FiltersBarProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const scoreRanges = [
     { label: "Scores", min: null, max: null },
     { label: "8-10 (Immediate)", min: 8, max: 10 },
@@ -54,14 +60,65 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
     filters.tagIds.length > 0 ||
     filters.groups.length > 0
 
+  // Prevent hydration mismatch by only rendering dropdowns after mount
+  if (!mounted) {
+    return (
+      <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Search - safe to render */}
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search..."
+              value={filters.search}
+              onChange={(e) => onFilterChange({ search: e.target.value })}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          {/* Placeholder buttons for layout */}
+          <Button variant="outline" className="flex-1 sm:flex-none sm:w-[160px] bg-transparent h-9 text-sm" disabled>
+            Scores
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
+            Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
+            Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none sm:w-[120px] bg-transparent h-9 text-sm" disabled>
+            {filters.country || "Countries"}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
+            Groups {filters.groups.length > 0 && `(${filters.groups.length})`}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[100px] bg-transparent h-9 text-sm" disabled>
+            Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer h-9 text-sm w-full sm:w-auto">
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3" suppressHydrationWarning>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Search */}
         <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search by company..."
+            placeholder="Search..."
             value={filters.search}
             onChange={(e) => onFilterChange({ search: e.target.value })}
             className="pl-9 h-9 text-sm"

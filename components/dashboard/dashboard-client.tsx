@@ -9,6 +9,7 @@ import { KPICards } from "./kpi-cards"
 import { FiltersBar } from "./filters-bar"
 import { LeadsTable } from "./leads-table"
 import { TagsManager } from "./tags-manager"
+import { HowItWorksGuide } from "./how-it-works-guide"
 
 interface DashboardClientProps {
   userId: string
@@ -108,6 +109,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     groups: [],
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
+  const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   // Fetch all dashboard data in ONE request
   const {
@@ -239,7 +241,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardHeader onSignOut={handleSignOut} onManageTags={() => setShowTagsManager(true)} />
+      <DashboardHeader 
+        onSignOut={handleSignOut} 
+        onManageTags={() => setShowTagsManager(true)}
+        onShowGuide={() => setShowHowItWorks(true)}
+      />
 
       <main className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <KPICards kpis={dashboardData?.kpis} loading={isLoading} />
@@ -271,6 +277,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           onTagsChange={handleTagsChange}
         />
       )}
+
+      <HowItWorksGuide 
+        open={showHowItWorks} 
+        onOpenChange={setShowHowItWorks} 
+      />
     </div>
   )
 }
