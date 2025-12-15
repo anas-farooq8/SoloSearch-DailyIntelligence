@@ -29,9 +29,9 @@ interface LeadsTableProps {
 }
 
 function getScoreBand(score: number) {
-  if (score >= 8) return { label: "Immediate outreach", emoji: "🔥", color: "bg-red-100 text-red-800" }
-  if (score >= 6) return { label: "High interest", emoji: "✅", color: "bg-green-100 text-green-800" }
-  if (score >= 4) return { label: "Monitor", emoji: "👀", color: "bg-amber-100 text-amber-800" }
+  if (score >= 8) return { label: "Immediate outreach", emoji: "", color: "bg-red-100 text-red-800" }
+  if (score >= 6) return { label: "High interest", emoji: "", color: "bg-green-100 text-green-800" }
+  if (score >= 4) return { label: "Monitor", emoji: "", color: "bg-amber-100 text-amber-800" }
   return { label: "Low", emoji: "", color: "bg-slate-100 text-slate-800" }
 }
 
@@ -169,7 +169,7 @@ export function LeadsTable({
                   className="hover:bg-slate-50 cursor-pointer"
                   onClick={() => setSelectedArticle(article)}
                 >
-                  <TableCell>
+                  <TableCell className="pl-4 sm:pl-5">
                     <Badge className={`${band.color} text-xs`}>
                       {article.lead_score}
                     </Badge>
