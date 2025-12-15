@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
 import type { Article, Tag, Filters } from "@/types/database"
 import { exportToExcel } from "@/lib/export"
 
@@ -316,51 +316,27 @@ export function LeadsTable({
       {/* Article Detail Modal */}
       {selectedArticle && (
         <Dialog open onOpenChange={() => setSelectedArticle(null)}>
-          <DialogContent className="max-w-[1600px] w-[95vw] sm:w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
-            <DialogHeader className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-slate-200 bg-slate-50">
-              <DialogTitle className="text-base sm:text-xl md:text-2xl font-bold pr-8 text-slate-900 leading-tight">{selectedArticle.title}</DialogTitle>
+          <DialogContent className="max-w-[1600px] w-[98vw] sm:w-[90vw] max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0">
+            <DialogHeader className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-slate-200 bg-slate-50 sticky top-0 z-20">
+              <div className="flex items-start gap-3">
+                <DialogTitle className="text-base sm:text-xl md:text-2xl font-bold pr-2 sm:pr-6 text-slate-900 leading-tight flex-1">
+                  {selectedArticle.title}
+                </DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Close"
+                  onClick={() => setSelectedArticle(null)}
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
 
-            <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 md:space-y-8 overflow-y-auto flex-1">
-              {/* Lead Score */}
-              <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
-                <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3">Lead Score</h3>
-                <Badge className={`${getScoreBand(selectedArticle.lead_score).color} text-sm sm:text-base px-2 sm:px-3 py-1`}>
-                  {selectedArticle.lead_score} - {getScoreBand(selectedArticle.lead_score).label}
-                </Badge>
-              </div>
-
-              {/* Why This Matters */}
-              {selectedArticle.why_this_matters && (
-                <div className="bg-blue-50 p-3 sm:p-4 md:p-5 rounded-lg border border-blue-200">
-                  <h3 className="text-sm sm:text-base font-bold text-blue-900 mb-2 sm:mb-3 flex items-center gap-2">
-                    <span className="text-lg sm:text-xl">💡</span> Why This Matters
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.why_this_matters}</p>
-                </div>
-              )}
-
-              {/* Outreach Angle */}
-              {selectedArticle.outreach_angle && (
-                <div className="bg-green-50 p-3 sm:p-4 md:p-5 rounded-lg border border-green-200">
-                  <h3 className="text-sm sm:text-base font-bold text-green-900 mb-2 sm:mb-3 flex items-center gap-2">
-                    <span className="text-lg sm:text-xl">🎯</span> Outreach Angle
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.outreach_angle}</p>
-                </div>
-              )}
-
-              {/* Additional Details */}
-              {selectedArticle.additional_details && (
-                <div className="bg-purple-50 p-3 sm:p-4 md:p-5 rounded-lg border border-purple-200">
-                  <h3 className="text-sm sm:text-base font-bold text-purple-900 mb-2 sm:mb-3 flex items-center gap-2">
-                    <span className="text-lg sm:text-xl">📋</span> Additional Details
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.additional_details}</p>
-                </div>
-              )}
-
-              {/* Company Details Card */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 md:space-y-8 overflow-y-auto flex-1">
+              {/* Company Details Card (moved to top) */}
               <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 md:p-5">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4 border-b pb-2">Company Details</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
@@ -406,7 +382,7 @@ export function LeadsTable({
                 </div>
               </div>
 
-              {/* Sector & Signals Card */}
+              {/* Classification (moved up) */}
               <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 md:p-5">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4 border-b pb-2">Classification</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
@@ -436,6 +412,44 @@ export function LeadsTable({
                   )}
                 </div>
               </div>
+
+              {/* Lead Score */}
+              <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
+                <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3">Lead Score</h3>
+                <Badge className={`${getScoreBand(selectedArticle.lead_score).color} text-sm sm:text-base px-2 sm:px-3 py-1`}>
+                  {selectedArticle.lead_score} - {getScoreBand(selectedArticle.lead_score).label}
+                </Badge>
+              </div>
+
+              {/* Why This Matters */}
+              {selectedArticle.why_this_matters && (
+                <div className="bg-blue-50 p-3 sm:p-4 md:p-5 rounded-lg border border-blue-200">
+                  <h3 className="text-sm sm:text-base font-bold text-blue-900 mb-2 sm:mb-3 flex items-center gap-2">
+                    <span className="text-lg sm:text-xl">💡</span> Why This Matters
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.why_this_matters}</p>
+                </div>
+              )}
+
+              {/* Outreach Angle */}
+              {selectedArticle.outreach_angle && (
+                <div className="bg-green-50 p-3 sm:p-4 md:p-5 rounded-lg border border-green-200">
+                  <h3 className="text-sm sm:text-base font-bold text-green-900 mb-2 sm:mb-3 flex items-center gap-2">
+                    <span className="text-lg sm:text-xl">🎯</span> Outreach Angle
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.outreach_angle}</p>
+                </div>
+              )}
+
+              {/* Additional Details */}
+              {selectedArticle.additional_details && (
+                <div className="bg-purple-50 p-3 sm:p-4 md:p-5 rounded-lg border border-purple-200">
+                  <h3 className="text-sm sm:text-base font-bold text-purple-900 mb-2 sm:mb-3 flex items-center gap-2">
+                    <span className="text-lg sm:text-xl">📋</span> Additional Details
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{selectedArticle.additional_details}</p>
+                </div>
+              )}
 
               {/* Source Information Card */}
               <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 md:p-5">
@@ -489,9 +503,11 @@ export function LeadsTable({
                 </div>
               </div>
             </div>
+            {/* close scroll container */}
+          </div>
 
-            {/* Action Buttons - Fixed at bottom */}
-            <div className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-2 sm:gap-3">
+          {/* Action Buttons - Fixed at bottom */}
+            <div className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row gap-2 sm:gap-3 sticky bottom-0 z-20">
               <Button 
                 variant="default"
                 onClick={() => window.open(selectedArticle.url, '_blank')}

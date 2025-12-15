@@ -43,20 +43,20 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
       {cards.map((card) => (
         <Card key={card.title} className="shadow-sm">
-          <CardContent className="p-3 sm:p-4">
+          <CardContent className="p-2.5 sm:p-3.5 md:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className={`p-2 rounded-lg ${card.bg} flex-shrink-0`}>
-                <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.color}`} />
+              <div className={`p-1.5 sm:p-2 rounded-lg ${card.bg} flex-shrink-0`}>
+                <card.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 ${card.color}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-slate-600 truncate">{card.title}</p>
+                <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 truncate">{card.title}</p>
                 {loading ? (
-                  <Skeleton className="h-6 sm:h-7 w-12 sm:w-16 mt-1" />
+                  <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16 mt-1" />
                 ) : (
-                  <p className="text-xl sm:text-2xl font-bold text-slate-900">{card.value}</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">{card.value}</p>
                 )}
               </div>
             </div>

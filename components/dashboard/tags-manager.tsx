@@ -155,12 +155,12 @@ export function TagsManager({ tags, onClose, onTagsChange }: TagsManagerProps) {
 
   return (
     <Dialog open onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl w-[98vw] sm:w-[90vw] max-h-[85vh] sm:max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3">
           <DialogTitle className="text-lg sm:text-xl">Manage Tags</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 sm:space-y-4">
+        <div className="px-4 sm:px-6 pb-5 space-y-3 sm:space-y-4 overflow-y-auto max-h-[74vh] sm:max-h-[80vh]">
           {/* Create new tag */}
           <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 bg-slate-50 rounded-lg">
             <Label className="text-sm sm:text-base">Create New Tag</Label>
@@ -202,7 +202,7 @@ export function TagsManager({ tags, onClose, onTagsChange }: TagsManagerProps) {
           {/* Existing tags */}
           <div className="space-y-2">
             <Label className="text-sm sm:text-base">Existing Tags</Label>
-            <div className="space-y-2 max-h-72 sm:max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-72 sm:max-h-96 overflow-y-auto pr-1">
               {localTags.map((tag) => (
                 <div
                   key={tag.id}

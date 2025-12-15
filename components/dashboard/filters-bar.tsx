@@ -2,7 +2,6 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -70,24 +69,31 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         </div>
 
         {/* Score Range */}
-        <Select
-          value={filters.minScore !== null ? `${filters.minScore}-${filters.maxScore}` : "all"}
-          onValueChange={(v) => {
-            const range = scoreRanges.find((r) => (r.min !== null ? `${r.min}-${r.max}` : "all") === v)
-            onFilterChange({ minScore: range?.min ?? null, maxScore: range?.max ?? null })
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-[160px] cursor-pointer h-9 text-sm">
-            <SelectValue placeholder="Score Range" />
-          </SelectTrigger>
-          <SelectContent>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex-1 sm:flex-none sm:w-[160px] bg-transparent cursor-pointer h-9 text-sm">
+              {filters.minScore !== null
+                ? scoreRanges.find((r) => r.min === filters.minScore)?.label || "Scores"
+                : "Scores"}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
             {scoreRanges.map((range) => (
-              <SelectItem key={range.label} value={range.min !== null ? `${range.min}-${range.max}` : "all"}>
+              <DropdownMenuCheckboxItem
+                key={range.label}
+                checked={filters.minScore === range.min && filters.maxScore === range.max}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ minScore: range.min, maxScore: range.max })
+                  }
+                }}
+              >
                 {range.label}
-              </SelectItem>
+              </DropdownMenuCheckboxItem>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Sectors Multi-select */}
         <DropdownMenu>
@@ -162,22 +168,40 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         </DropdownMenu>
 
         {/* Country */}
-        <Select
-          value={filters.country || "all"}
-          onValueChange={(v) => onFilterChange({ country: v === "all" ? null : v })}
-        >
-          <SelectTrigger className="flex-1 sm:flex-none sm:w-[120px] cursor-pointer h-9 text-sm">
-            <SelectValue placeholder="Country" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Countries</SelectItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex-1 sm:flex-none sm:w-[120px] bg-transparent cursor-pointer h-9 text-sm">
+              {filters.country || "Countries"}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-countries"
+              checked={!filters.country}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ country: null })
+                }
+              }}
+            >
+              All Countries
+            </DropdownMenuCheckboxItem>
             {filterOptions.countries.map((country) => (
-              <SelectItem key={country} value={country}>
+              <DropdownMenuCheckboxItem
+                key={country}
+                checked={filters.country === country}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ country })
+                  }
+                }}
+              >
                 {country}
-              </SelectItem>
+              </DropdownMenuCheckboxItem>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Groups Multi-select */}
         <DropdownMenu>

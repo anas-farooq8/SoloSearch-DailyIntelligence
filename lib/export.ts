@@ -44,7 +44,7 @@ export async function exportToExcel(articles: Article[], filters: Filters) {
       buyer: article.buyer || "",
       sectors: (article.sector || []).join(", "),
       signals: (article.trigger_signal || []).join(", "),
-      summary: article.ai_summary || "",
+      summary: article.why_this_matters || "",
       amount: article.amount || "",
       source: article.source,
       url: article.url,
