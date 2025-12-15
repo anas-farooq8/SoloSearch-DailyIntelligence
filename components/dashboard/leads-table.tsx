@@ -316,10 +316,10 @@ export function LeadsTable({
       {/* Article Detail Modal */}
       {selectedArticle && (
         <Dialog open onOpenChange={() => setSelectedArticle(null)}>
-          <DialogContent className="max-w-[1600px] w-[98vw] sm:w-[90vw] max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0">
-            <DialogHeader className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-slate-200 bg-slate-50 sticky top-0 z-20">
-              <div className="flex items-start gap-3">
-                <DialogTitle className="text-base sm:text-xl md:text-2xl font-bold pr-2 sm:pr-6 text-slate-900 leading-tight flex-1">
+          <DialogContent className="max-w-[98vw] sm:max-w-none lg:max-w-3xl xl:max-w-4xl 2xl:max-w-[1100px] w-[94vw] sm:w-[90vw] lg:w-[85vw] max-h-[90vh] sm:max-h-[95vh] overflow-hidden flex flex-col p-0">
+            <DialogHeader className="px-4 sm:px-6 md:px-8 pt-3 sm:pt-5 pb-1.5 sm:pb-2.5 border-b border-slate-200 bg-slate-50 sticky top-0 z-20">
+              <div className="flex items-start gap-2.5 sm:gap-3">
+                <DialogTitle className="text-base sm:text-xl md:text-2xl font-bold pr-2 sm:pr-5 text-slate-900 leading-tight flex-1">
                   {selectedArticle.title}
                 </DialogTitle>
                 <Button
@@ -335,7 +335,7 @@ export function LeadsTable({
             </DialogHeader>
 
             <div className="flex-1 overflow-hidden flex flex-col">
-              <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 md:space-y-8 overflow-y-auto flex-1">
+              <div className="px-4 sm:px-6 md:px-8 pt-2 sm:pt-3 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3 md:space-y-4 overflow-y-auto flex-1">
               {/* Company Details Card (moved to top) */}
               <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 md:p-5">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4 border-b pb-2">Company Details</h3>
