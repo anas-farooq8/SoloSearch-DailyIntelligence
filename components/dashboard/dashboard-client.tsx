@@ -22,6 +22,7 @@ interface DashboardData {
     sectors: string[]
     triggers: string[]
     countries: string[]
+    groups: string[]
   }
 }
 
@@ -38,14 +39,15 @@ const fetcher = async (url: string, options?: RequestInit) => {
 // Client-side filtering function
 const applyFilters = (articles: Article[], filters: Filters): Article[] => {
   return articles.filter((article) => {
-    // Search filter (title, company, or text)
+    // Search filter (title, company)
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
       const matchesSearch =
         article.title?.toLowerCase().includes(searchLower) ||
         article.company?.toLowerCase().includes(searchLower) ||
-        article.text?.toLowerCase().includes(searchLower) ||
-        article.ai_summary?.toLowerCase().includes(searchLower)
+        article.why_this_matters?.toLowerCase().includes(searchLower) ||
+        article.outreach_angle?.toLowerCase().includes(searchLower) ||
+        article.additional_details?.toLowerCase().includes(searchLower)
       if (!matchesSearch) return false
     }
 
@@ -83,6 +85,11 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
       if (!hasTag) return false
     }
 
+    // Group filter
+    if (filters.groups && filters.groups.length > 0) {
+      if (!article.group_name || !filters.groups.includes(article.group_name)) return false
+    }
+
     return true
   })
 }
@@ -98,6 +105,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     triggers: [],
     country: null,
     tagIds: [],
+    groups: [],
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
 
@@ -233,13 +241,13 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     <div className="min-h-screen bg-slate-50">
       <DashboardHeader onSignOut={handleSignOut} onManageTags={() => setShowTagsManager(true)} />
 
-      <main className="max-w-[1600px] mx-auto p-6 space-y-6">
+      <main className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <KPICards kpis={dashboardData?.kpis} loading={isLoading} />
 
         <FiltersBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], countries: [] }}
+          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], countries: [], groups: [] }}
           tags={dashboardData?.tags || []}
         />
 

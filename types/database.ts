@@ -5,7 +5,6 @@ export interface Article {
   url: string
   date: string
   title: string
-  text?: string
   updated_at: string
   company: string
   buyer: string
@@ -14,7 +13,9 @@ export interface Article {
   trigger_signal: string[]
   solution: string
   lead_score: number
-  ai_summary: string
+  why_this_matters: string | null
+  outreach_angle: string | null
+  additional_details: string | null
   location_region: string
   location_country: string
   tags?: Tag[]
@@ -48,4 +49,5 @@ export interface Filters {
   triggers: string[]
   country: string | null
   tagIds: string[]
+  groups: string[]
 }

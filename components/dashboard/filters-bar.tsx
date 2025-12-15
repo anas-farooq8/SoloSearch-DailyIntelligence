@@ -19,6 +19,7 @@ interface FiltersBarProps {
     sectors: string[]
     triggers: string[]
     countries: string[]
+    groups: string[]
   }
   tags: Tag[]
 }
@@ -41,6 +42,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
       triggers: [],
       country: null,
       tagIds: [],
+      groups: [],
     })
   }
 
@@ -50,19 +52,20 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
     filters.sectors.length > 0 ||
     filters.triggers.length > 0 ||
     filters.country ||
-    filters.tagIds.length > 0
+    filters.tagIds.length > 0 ||
+    filters.groups.length > 0
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-3" suppressHydrationWarning>
+    <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3" suppressHydrationWarning>
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search by company..."
             value={filters.search}
             onChange={(e) => onFilterChange({ search: e.target.value })}
-            className="pl-9"
+            className="pl-9 h-9 text-sm"
           />
         </div>
 
@@ -74,7 +77,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             onFilterChange({ minScore: range?.min ?? null, maxScore: range?.max ?? null })
           }}
         >
-          <SelectTrigger className="w-[160px] cursor-pointer">
+          <SelectTrigger className="w-full sm:w-[160px] cursor-pointer h-9 text-sm">
             <SelectValue placeholder="Score Range" />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +92,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         {/* Sectors Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[120px] bg-transparent cursor-pointer">
+            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
               Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -125,7 +128,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
         {/* Triggers Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[120px] bg-transparent cursor-pointer">
+            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
               Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -163,11 +166,11 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           value={filters.country || "all"}
           onValueChange={(v) => onFilterChange({ country: v === "all" ? null : v })}
         >
-          <SelectTrigger className="w-[120px] cursor-pointer">
+          <SelectTrigger className="flex-1 sm:flex-none sm:w-[120px] cursor-pointer h-9 text-sm">
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
+            <SelectItem value="all">Countries</SelectItem>
             {filterOptions.countries.map((country) => (
               <SelectItem key={country} value={country}>
                 {country}
@@ -176,10 +179,46 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </SelectContent>
         </Select>
 
+        {/* Groups Multi-select */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
+              Groups {filters.groups.length > 0 && `(${filters.groups.length})`}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-groups"
+              checked={filters.groups.length === 0}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ groups: [] })
+                }
+              }}
+            >
+              All Groups
+            </DropdownMenuCheckboxItem>
+            {filterOptions.groups.map((group) => (
+              <DropdownMenuCheckboxItem
+                key={group}
+                checked={filters.groups.includes(group)}
+                onCheckedChange={(checked) => {
+                  onFilterChange({
+                    groups: checked ? [...filters.groups, group] : filters.groups.filter((g) => g !== group),
+                  })
+                }}
+              >
+                {group}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Tags Multi-select */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="min-w-[100px] bg-transparent cursor-pointer">
+            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[100px] bg-transparent cursor-pointer h-9 text-sm">
               Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -204,7 +243,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
 
         {/* Clear Filters */}
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer">
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer h-9 text-sm w-full sm:w-auto">
             <X className="h-4 w-4 mr-1" />
             Clear
           </Button>

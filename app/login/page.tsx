@@ -81,30 +81,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 sm:p-6 md:p-8">
       <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3 text-center">
+        <CardHeader className="space-y-3 text-center px-4 sm:px-6 py-6">
           <div className="flex justify-center">
             <Image
               src="https://www.google.com/s2/favicons?domain=https://www.solosearch.co.uk/&sz=64"
               alt="SoloSearch Logo"
               width={48}
               height={48}
-              className="rounded"
+              className="rounded w-10 h-10 sm:w-12 sm:h-12"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-900">SoloSearch-DailyIntelligence</CardTitle>
-          <CardDescription className="text-slate-600">Sign in to access your dashboard</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 break-words">SoloSearch-DailyIntelligence</CardTitle>
+          <CardDescription className="text-sm sm:text-base text-slate-600">Sign in to access your dashboard</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6 pb-6">
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="text-sm">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -117,12 +117,12 @@ export default function LoginPage() {
                 onBlur={() => validateEmail(email)}
                 required
                 disabled={loading}
-                className={emailError ? "border-red-500" : ""}
+                className={`text-sm sm:text-base h-10 sm:h-11 ${emailError ? "border-red-500" : ""}`}
               />
-              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
+              {emailError && <p className="text-xs sm:text-sm text-red-500">{emailError}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -136,20 +136,20 @@ export default function LoginPage() {
                   onBlur={() => validatePassword(password)}
                   required
                   disabled={loading}
-                  className={passwordError ? "border-red-500 pr-10" : "pr-10"}
+                  className={`text-sm sm:text-base h-10 sm:h-11 ${passwordError ? "border-red-500 pr-10" : "pr-10"}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer touch-manipulation"
                   disabled={loading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+              {passwordError && <p className="text-xs sm:text-sm text-red-500">{passwordError}</p>}
             </div>
-            <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
+            <Button type="submit" className="w-full cursor-pointer h-10 sm:h-11 text-sm sm:text-base touch-manipulation" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

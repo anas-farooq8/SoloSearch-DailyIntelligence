@@ -14,14 +14,32 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch all data in parallel using direct queries
-    const [articlesResult, tagsResult, kpisResult] = await Promise.all([
-      // Fetch all processed articles with their tags (LEFT JOIN to include articles without tags)
+    // Fetch all data in parallel - only articles and tags
+    const [articlesResult, tagsResult] = await Promise.all([
+      // Fetch only the necessary fields for processed articles with their tags
       supabase
         .from("articles")
         .select(
           `
-          *,
+          id,
+          source,
+          group_name,
+          url,
+          date,
+          title,
+          updated_at,
+          company,
+          buyer,
+          sector,
+          amount,
+          trigger_signal,
+          solution,
+          lead_score,
+          why_this_matters,
+          outreach_angle,
+          additional_details,
+          location_region,
+          location_country,
           article_tags (
             tag:tags (
               id,
@@ -32,38 +50,10 @@ export async function GET() {
         `
         )
         .eq("status", "processed")
-        .order("created_at", { ascending: false }),
+        .order("updated_at", { ascending: false }),
 
       // Fetch all tags
       supabase.from("tags").select("*").order("name"),
-
-      // Fetch KPI data using direct queries
-      Promise.all([
-        // Total articles today
-        supabase
-          .from("articles")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "processed")
-          .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
-
-        // High priority articles today (lead_score >= 7)
-        supabase
-          .from("articles")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "processed")
-          .gte("lead_score", 7)
-          .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
-
-        // Weekly added (last 7 days)
-        supabase
-          .from("articles")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "processed")
-          .gte(
-            "created_at",
-            new Date(new Date().setDate(new Date().getDate() - 7)).toISOString()
-          ),
-      ]),
     ])
 
     if (articlesResult.error) {
@@ -76,11 +66,14 @@ export async function GET() {
       return NextResponse.json({ error: tagsResult.error.message }, { status: 500 })
     }
 
-    // Process articles to flatten tag structure
-    const articles = (articlesResult.data || []).map((article) => ({
-      ...article,
-      tags: article.article_tags?.map((at: any) => at.tag).filter(Boolean) || [],
-    }))
+    // Process articles to flatten tag structure and remove article_tags
+    const articles = (articlesResult.data || []).map((article) => {
+      const { article_tags, ...articleData } = article
+      return {
+        ...articleData,
+        tags: article_tags?.map((at: any) => at.tag).filter(Boolean) || [],
+      }
+    })
 
     // Extract unique filter options from articles
     const sectors = [...new Set(articles.flatMap((a) => a.sector || []))].filter(Boolean).sort()
@@ -88,18 +81,29 @@ export async function GET() {
       .filter(Boolean)
       .sort()
     const countries = [...new Set(articles.map((a) => a.location_country).filter(Boolean))].sort()
+    const groups = [...new Set(articles.map((a) => a.group_name).filter(Boolean))].sort()
 
-    // Process KPIs
-    const [totalTodayResult, highPriorityTodayResult, weeklyAddedResult] = kpisResult
+    // Calculate KPIs from the articles (using updated_at as processed date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayISO = today.toISOString()
+    
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const weekAgoISO = weekAgo.toISOString()
 
-    // Count processed articles without any tags (awaiting review)
+    const totalToday = articles.filter((article) => article.updated_at >= todayISO).length
+    const highPriorityToday = articles.filter(
+      (article) => article.lead_score >= 8 && article.updated_at >= todayISO
+    ).length
     const awaitingReview = articles.filter((article) => !article.tags || article.tags.length === 0).length
+    const weeklyAdded = articles.filter((article) => article.updated_at >= weekAgoISO).length
 
     const kpis = {
-      total_today: totalTodayResult.count || 0,
-      high_priority_today: highPriorityTodayResult.count || 0,
+      total_today: totalToday,
+      high_priority_today: highPriorityToday,
       awaiting_review: awaitingReview,
-      weekly_added: weeklyAddedResult.count || 0,
+      weekly_added: weeklyAdded,
     }
 
     return NextResponse.json({
@@ -110,6 +114,7 @@ export async function GET() {
         sectors,
         triggers,
         countries,
+        groups,
       },
     })
   } catch (error) {
