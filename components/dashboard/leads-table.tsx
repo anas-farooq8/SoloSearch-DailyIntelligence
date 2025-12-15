@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X, Loader2 } from "lucide-react"
 import type { Article, Tag, Filters } from "@/types/database"
 import { exportToExcel } from "@/lib/export"
 
@@ -26,6 +26,8 @@ interface LeadsTableProps {
   onTagUpdate: (articleId: string, tagId: string, action: "add" | "remove") => void
   filters: Filters
   userId: string
+  addingTagId: string | null
+  removingTagId: string | null
 }
 
 function getScoreBand(score: number) {
@@ -45,6 +47,8 @@ export function LeadsTable({
   onTagUpdate,
   filters,
   userId,
+  addingTagId,
+  removingTagId,
 }: LeadsTableProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'date' | null>(null)
@@ -234,37 +238,84 @@ export function LeadsTable({
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-wrap gap-1">
-                      {articleTags.map((tag) => (
-                        <Badge
-                          key={tag.id}
-                          style={{ backgroundColor: tag.color, color: "#fff" }}
-                          className="cursor-pointer text-[10px] sm:text-xs"
-                          onClick={() => onTagUpdate(article.id, tag.id, "remove")}
-                        >
-                          {tag.name} ×
-                        </Badge>
-                      ))}
+                      {articleTags.map((tag) => {
+                        const isRemoving = removingTagId === `${article.id}:${tag.id}`
+                        return (
+                          <Badge
+                            key={tag.id}
+                            style={{ backgroundColor: tag.color, color: "#fff" }}
+                            className={`text-[10px] sm:text-xs ${
+                              isRemoving ? "opacity-50 cursor-wait" : "cursor-pointer"
+                            }`}
+                            onClick={() => {
+                              if (!isRemoving) {
+                                onTagUpdate(article.id, tag.id, "remove")
+                              }
+                            }}
+                          >
+                            {isRemoving ? (
+                              <span className="flex items-center gap-1">
+                                <Loader2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin" />
+                                {tag.name}
+                              </span>
+                            ) : (
+                              `${tag.name} ×`
+                            )}
+                          </Badge>
+                        )
+                      })}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <Plus className="h-3 w-3" />
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0"
+                            disabled={
+                              (addingTagId !== null && addingTagId.startsWith(`${article.id}:`)) ||
+                              (removingTagId !== null && removingTagId.startsWith(`${article.id}:`))
+                            }
+                          >
+                            {(addingTagId !== null && addingTagId.startsWith(`${article.id}:`)) ||
+                            (removingTagId !== null && removingTagId.startsWith(`${article.id}:`)) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Plus className="h-3 w-3" />
+                            )}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           {tags
                             .filter((t) => !articleTags.some((at) => at.id === t.id))
-                            .map((tag) => (
-                              <DropdownMenuCheckboxItem
-                                key={tag.id}
-                                onCheckedChange={() => onTagUpdate(article.id, tag.id, "add")}
-                              >
-                                <span
-                                  className="inline-block w-3 h-3 rounded-full mr-2"
-                                  style={{ backgroundColor: tag.color }}
-                                />
-                                {tag.name}
-                              </DropdownMenuCheckboxItem>
-                            ))}
+                            .map((tag) => {
+                              const isAdding = addingTagId === `${article.id}:${tag.id}`
+                              const isAnyOperationInProgress = 
+                                (addingTagId !== null && addingTagId.startsWith(`${article.id}:`)) ||
+                                (removingTagId !== null && removingTagId.startsWith(`${article.id}:`))
+                              return (
+                                <DropdownMenuCheckboxItem
+                                  key={tag.id}
+                                  onCheckedChange={() => {
+                                    if (!isAdding && !isAnyOperationInProgress) {
+                                      onTagUpdate(article.id, tag.id, "add")
+                                    }
+                                  }}
+                                  disabled={isAdding || isAnyOperationInProgress}
+                                >
+                                  <span
+                                    className="inline-block w-3 h-3 rounded-full mr-2"
+                                    style={{ backgroundColor: tag.color }}
+                                  />
+                                  {isAdding ? (
+                                    <span className="flex items-center gap-2">
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      {tag.name}
+                                    </span>
+                                  ) : (
+                                    tag.name
+                                  )}
+                                </DropdownMenuCheckboxItem>
+                              )
+                            })}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

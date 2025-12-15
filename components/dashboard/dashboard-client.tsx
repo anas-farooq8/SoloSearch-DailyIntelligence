@@ -110,6 +110,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
   const [showHowItWorks, setShowHowItWorks] = useState(false)
+  const [addingTagId, setAddingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
+  const [removingTagId, setRemovingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
 
   // Fetch all dashboard data in ONE request
   const {
@@ -150,6 +152,17 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   }
 
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
+    const operationKey = `${articleId}:${tagId}`
+    
+    // Prevent duplicate operations
+    if (addingTagId === operationKey || removingTagId === operationKey) return
+    
+    if (action === "add") {
+      setAddingTagId(operationKey)
+    } else {
+      setRemovingTagId(operationKey)
+    }
+    
     try {
       if (action === "add") {
         await fetcher("/api/dashboard/article-tags", {
@@ -195,6 +208,12 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       console.error("Error updating tag:", error)
       // Revert on error by refetching
       mutateDashboard()
+    } finally {
+      if (action === "add") {
+        setAddingTagId(null)
+      } else {
+        setRemovingTagId(null)
+      }
     }
   }
 
@@ -267,6 +286,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           onTagUpdate={handleTagUpdate}
           filters={filters}
           userId={userId}
+          addingTagId={addingTagId}
+          removingTagId={removingTagId}
         />
       </main>
 
