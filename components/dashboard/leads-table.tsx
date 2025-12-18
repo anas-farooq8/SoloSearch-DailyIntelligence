@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -53,8 +53,29 @@ export function LeadsTable({
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'date' | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentTime, setCurrentTime] = useState<Date>(new Date())
   const pageSize = 20
   const totalPages = Math.ceil(total / pageSize)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const formatDateTime = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
 
   const handleSort = (field: 'score' | 'date') => {
     if (sortBy === field) {
@@ -112,10 +133,15 @@ export function LeadsTable({
         <p className="text-xs sm:text-sm text-slate-600">
           Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, total)} of {total} leads
         </p>
-        <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
-          <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-          Export to Excel
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs sm:text-sm text-slate-600 font-mono">
+            {formatDateTime(currentTime)}
+          </span>
+          <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+            Export to Excel
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto -mx-px">
