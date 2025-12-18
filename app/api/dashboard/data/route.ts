@@ -85,11 +85,11 @@ export async function GET() {
 
     // Calculate KPIs from the articles (using updated_at as processed date)
     const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayISO = today.toISOString()
+    const todayISO = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())).toISOString()
     
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
+    weekAgo.setUTCHours(0, 0, 0, 0)
     const weekAgoISO = weekAgo.toISOString()
 
     const totalToday = articles.filter((article) => article.updated_at >= todayISO).length
