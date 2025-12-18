@@ -113,6 +113,32 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const [addingTagId, setAddingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
   const [removingTagId, setRemovingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
 
+  // Helper function to calculate all KPIs using local timezone
+  const calculateKPIs = useCallback((articles: Article[]): KPIStats => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayTime = today.getTime()
+    
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    weekAgo.setHours(0, 0, 0, 0)
+    const weekAgoTime = weekAgo.getTime()
+    
+    const totalToday = articles.filter(article => new Date(article.updated_at).getTime() >= todayTime).length
+    const highPriorityToday = articles.filter(article => 
+      article.lead_score >= 8 && new Date(article.updated_at).getTime() >= todayTime
+    ).length
+    const awaitingReview = articles.filter(article => !article.tags || article.tags.length === 0).length
+    const weeklyAdded = articles.filter(article => new Date(article.updated_at).getTime() >= weekAgoTime).length
+    
+    return {
+      total_today: totalToday,
+      high_priority_today: highPriorityToday,
+      awaiting_review: awaitingReview,
+      weekly_added: weeklyAdded,
+    }
+  }, [])
+
   // Fetch all dashboard data in ONE request
   const {
     data: dashboardData,
@@ -129,6 +155,12 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     return applyFilters(dashboardData.articles, filters)
   }, [dashboardData?.articles, filters])
 
+  // Calculate KPIs using local timezone
+  const kpis = useMemo(() => {
+    if (!dashboardData?.articles) return dashboardData?.kpis
+    return calculateKPIs(dashboardData.articles)
+  }, [dashboardData?.articles, calculateKPIs])
+
   // Paginate filtered articles
   const pageSize = 20
   const paginatedArticles = useMemo(() => {
@@ -141,15 +173,6 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     setFilters((prev) => ({ ...prev, ...newFilters }))
     setPage(0) // Reset to first page when filters change
   }, [])
-
-  // Helper function to recalculate awaiting_review KPI
-  const recalculateKPIs = (articles: Article[], currentKPIs: KPIStats): KPIStats => {
-    const awaitingReview = articles.filter(article => !article.tags || article.tags.length === 0).length
-    return {
-      ...currentKPIs,
-      awaiting_review: awaitingReview
-    }
-  }
 
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
     const operationKey = `${articleId}:${tagId}`
@@ -199,7 +222,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         })
         
         // Recalculate KPIs with updated articles
-        const updatedKPIs = recalculateKPIs(updatedArticles, dashboardData.kpis)
+        const updatedKPIs = calculateKPIs(updatedArticles)
         
         // Update cache optimistically without refetching
         mutateDashboard({ ...dashboardData, articles: updatedArticles, kpis: updatedKPIs }, false)
@@ -247,7 +270,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       })
       
       // Recalculate KPIs with updated articles
-      const updatedKPIs = recalculateKPIs(updatedArticles, dashboardData.kpis)
+      const updatedKPIs = calculateKPIs(updatedArticles)
       
       mutateDashboard({ ...dashboardData, tags: updatedTags, articles: updatedArticles, kpis: updatedKPIs }, false)
     }
@@ -267,7 +290,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       />
 
       <main className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <KPICards kpis={dashboardData?.kpis} loading={isLoading} />
+        <KPICards kpis={kpis} loading={isLoading} />
 
         <FiltersBar
           filters={filters}

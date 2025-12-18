@@ -83,27 +83,15 @@ export async function GET() {
     const countries = [...new Set(articles.map((a) => a.location_country).filter(Boolean))].sort()
     const groups = [...new Set(articles.map((a) => a.group_name).filter(Boolean))].sort()
 
-    // Calculate KPIs from the articles (using updated_at as processed date)
-    const today = new Date()
-    const todayISO = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())).toISOString()
-    
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    weekAgo.setUTCHours(0, 0, 0, 0)
-    const weekAgoISO = weekAgo.toISOString()
-
-    const totalToday = articles.filter((article) => article.updated_at >= todayISO).length
-    const highPriorityToday = articles.filter(
-      (article) => article.lead_score >= 8 && article.updated_at >= todayISO
-    ).length
+    // KPIs will be calculated on client-side to use user's local timezone
+    // Just return basic awaiting_review count here
     const awaitingReview = articles.filter((article) => !article.tags || article.tags.length === 0).length
-    const weeklyAdded = articles.filter((article) => article.updated_at >= weekAgoISO).length
 
     const kpis = {
-      total_today: totalToday,
-      high_priority_today: highPriorityToday,
+      total_today: 0, // Will be calculated on client
+      high_priority_today: 0, // Will be calculated on client
       awaiting_review: awaitingReview,
-      weekly_added: weeklyAdded,
+      weekly_added: 0, // Will be calculated on client
     }
 
     return NextResponse.json({
