@@ -30,19 +30,12 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
   useEffect(() => {
     setMounted(true)
   }, [])
-  const scoreRanges = [
-    { label: "Scores", min: null, max: null },
-    { label: "8-10 (Immediate)", min: 8, max: 10 },
-    { label: "6-7 (High Interest)", min: 6, max: 7 },
-    { label: "4-5 (Monitor)", min: 4, max: 5 },
-    { label: "1-3 (Low)", min: 1, max: 3 },
-  ]
 
   const clearFilters = () => {
     onFilterChange({
       search: "",
-      minScore: null,
-      maxScore: null,
+      minScore: 5,
+      maxScore: 10,
       sectors: [],
       triggers: [],
       country: null,
@@ -76,10 +69,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             />
           </div>
           {/* Placeholder buttons for layout */}
-          <Button variant="outline" className="flex-1 sm:flex-none sm:w-[160px] bg-transparent h-9 text-sm" disabled>
-            Scores
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex-1 sm:flex-none sm:w-[200px] h-9" />
           <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
             Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
             <ChevronDown className="ml-2 h-4 w-4" />
@@ -90,10 +80,6 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </Button>
           <Button variant="outline" className="flex-1 sm:flex-none sm:w-[120px] bg-transparent h-9 text-sm" disabled>
             {filters.country || "Countries"}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
-            Groups {filters.groups.length > 0 && `(${filters.groups.length})`}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
           <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[100px] bg-transparent h-9 text-sm" disabled>
@@ -125,32 +111,101 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           />
         </div>
 
-        {/* Score Range */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:w-[160px] bg-transparent cursor-pointer h-9 text-sm">
-              {filters.minScore !== null
-                ? scoreRanges.find((r) => r.min === filters.minScore)?.label || "Scores"
-                : "Scores"}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {scoreRanges.map((range) => (
-              <DropdownMenuCheckboxItem
-                key={range.label}
-                checked={filters.minScore === range.min && filters.maxScore === range.max}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    onFilterChange({ minScore: range.min, maxScore: range.max })
-                  }
-                }}
-              >
-                {range.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Score Range Slider - Dual handles for min and max */}
+        <div className="flex flex-col gap-2 flex-1 sm:flex-none sm:w-[300px]">
+          <div className="flex items-center justify-between text-sm text-slate-600">
+            <span>
+              Score: {filters.minScore ?? 5} - {filters.maxScore ?? 10}
+              {filters.minScore === filters.maxScore && filters.minScore !== null && " (exact match)"}
+            </span>
+          </div>
+          <div className="relative h-8 flex items-center">
+            {/* Track background */}
+            <div className="absolute w-full h-2 bg-slate-200 rounded-full pointer-events-none"></div>
+            {/* Active track */}
+            <div
+              className="absolute h-2 bg-blue-600 rounded-full pointer-events-none"
+              style={{
+                left: `${((filters.minScore ?? 5) - 5) * 20}%`,
+                right: `${100 - ((filters.maxScore ?? 10) - 5) * 20}%`,
+              }}
+            ></div>
+            {/* Min Score Slider */}
+            <input
+              type="range"
+              min="5"
+              max="10"
+              value={filters.minScore ?? 5}
+              onChange={(e) => {
+                const newMin = parseInt(e.target.value)
+                const currentMax = filters.maxScore ?? 10
+                if (newMin <= currentMax) {
+                  onFilterChange({ minScore: newMin })
+                }
+              }}
+              className="absolute w-full h-2 bg-transparent appearance-none cursor-grab active:cursor-grabbing pointer-events-auto"
+              style={{
+                zIndex: filters.minScore === filters.maxScore ? 5 : 3,
+              }}
+            />
+            {/* Max Score Slider */}
+            <input
+              type="range"
+              min="5"
+              max="10"
+              value={filters.maxScore ?? 10}
+              onChange={(e) => {
+                const newMax = parseInt(e.target.value)
+                const currentMin = filters.minScore ?? 5
+                if (newMax >= currentMin) {
+                  onFilterChange({ maxScore: newMax })
+                }
+              }}
+              className="absolute w-full h-2 bg-transparent appearance-none cursor-grab active:cursor-grabbing pointer-events-auto"
+              style={{ zIndex: 4 }}
+            />
+          </div>
+          <style jsx>{`
+            input[type="range"] {
+              pointer-events: none;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+              appearance: none;
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #2563eb;
+              cursor: grab;
+              border: 3px solid white;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              pointer-events: auto;
+            }
+            input[type="range"]::-moz-range-thumb {
+              width: 18px;
+              height: 18px;
+              border-radius: 50%;
+              background: #2563eb;
+              cursor: grab;
+              border: 3px solid white;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              pointer-events: auto;
+            }
+            input[type="range"]:active::-webkit-slider-thumb {
+              cursor: grabbing;
+            }
+            input[type="range"]:active::-moz-range-thumb {
+              cursor: grabbing;
+            }
+            input[type="range"]::-webkit-slider-thumb:hover {
+              background: #1d4ed8;
+              transform: scale(1.1);
+            }
+            input[type="range"]::-moz-range-thumb:hover {
+              background: #1d4ed8;
+              transform: scale(1.1);
+            }
+          `}</style>
+        </div>
 
         {/* Sectors Multi-select */}
         <DropdownMenu>
@@ -260,7 +315,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Groups Multi-select */}
+        {/* Groups - Static values 1, 2, 3 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
@@ -268,7 +323,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+          <DropdownMenuContent>
             <DropdownMenuCheckboxItem
               key="all-groups"
               checked={filters.groups.length === 0}
@@ -280,7 +335,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             >
               All Groups
             </DropdownMenuCheckboxItem>
-            {filterOptions.groups.map((group) => (
+            {["1", "2", "3"].map((group) => (
               <DropdownMenuCheckboxItem
                 key={group}
                 checked={filters.groups.includes(group)}
@@ -290,7 +345,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
                   })
                 }}
               >
-                {group}
+                Group {group}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>

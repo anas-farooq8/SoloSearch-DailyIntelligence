@@ -26,44 +26,45 @@ export async function middleware(request: NextRequest) {
   )
 
   try {
+    // Use getSession instead of getUser to avoid automatic token refresh attempts
+    // This prevents the "refresh_token_not_found" errors in middleware
     const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    // If there's an auth error (like invalid refresh token), clear cookies and redirect to login
-    if (error) {
-      // Clear all Supabase auth cookies (they use a pattern like sb-<project-ref>-auth-token)
+    // If no session exists, redirect to login (except for login/auth pages)
+    if (!session && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
+      // Clear any stale auth cookies
       const allCookies = request.cookies.getAll()
       allCookies.forEach((cookie) => {
         if (cookie.name.startsWith("sb-")) {
           supabaseResponse.cookies.delete(cookie.name)
         }
       })
-
-      // Only redirect if not already on login/auth page
-      if (!request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
-        const url = request.nextUrl.clone()
-        url.pathname = "/login"
-        return NextResponse.redirect(url)
-      }
-
-      return supabaseResponse
-    }
-
-    if (!user && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
+      
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       return NextResponse.redirect(url)
     }
 
-    if (user && request.nextUrl.pathname === "/login") {
+    // If user is logged in and trying to access login page, redirect to dashboard
+    if (session && request.nextUrl.pathname === "/login") {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
     }
   } catch (error) {
     // Handle any unexpected errors gracefully
+    console.error("Middleware auth error:", error)
+    
+    // Clear cookies on error
+    const allCookies = request.cookies.getAll()
+    allCookies.forEach((cookie) => {
+      if (cookie.name.startsWith("sb-")) {
+        supabaseResponse.cookies.delete(cookie.name)
+      }
+    })
+    
     // If we're not on login/auth page, redirect to login
     if (!request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
       const url = request.nextUrl.clone()
