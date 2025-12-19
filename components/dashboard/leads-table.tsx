@@ -54,7 +54,7 @@ export function LeadsTable({
   const [sortBy, setSortBy] = useState<'score' | 'date' | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
-  const pageSize = 20
+  const pageSize = 50
   const totalPages = Math.ceil(total / pageSize)
 
   useEffect(() => {

@@ -162,7 +162,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   }, [dashboardData?.articles, calculateKPIs])
 
   // Paginate filtered articles
-  const pageSize = 20
+  const pageSize = 50
   const paginatedArticles = useMemo(() => {
     const start = page * pageSize
     const end = start + pageSize
