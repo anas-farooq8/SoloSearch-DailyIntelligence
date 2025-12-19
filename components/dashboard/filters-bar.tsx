@@ -315,7 +315,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Groups - Static values 1, 2, 3 */}
+        {/* Groups - Named categories */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
@@ -335,17 +335,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             >
               All Groups
             </DropdownMenuCheckboxItem>
-            {["1", "2", "3"].map((group) => (
+            {[
+              { id: "1", name: "NHS Contracts" },
+              { id: "2", name: "Startup Funding & Grants" },
+              { id: "3", name: "HealthTech Media Coverage" },
+            ].map((group) => (
               <DropdownMenuCheckboxItem
-                key={group}
-                checked={filters.groups.includes(group)}
+                key={group.id}
+                checked={filters.groups.includes(group.id)}
                 onCheckedChange={(checked) => {
                   onFilterChange({
-                    groups: checked ? [...filters.groups, group] : filters.groups.filter((g) => g !== group),
+                    groups: checked ? [...filters.groups, group.id] : filters.groups.filter((g) => g !== group.id),
                   })
                 }}
               >
-                Group {group}
+                {group.name}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
