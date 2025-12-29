@@ -53,27 +53,8 @@ export function LeadsTable({
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'date' | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [currentTime, setCurrentTime] = useState<Date>(new Date())
   const pageSize = 50
   const totalPages = Math.ceil(total / pageSize)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const formatDateTime = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, '0')
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const year = date.getFullYear()
-    const hours = date.getHours().toString().padStart(2, '0')
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    const seconds = date.getSeconds().toString().padStart(2, '0')
-    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`
-  }
 
   const handleSort = (field: 'score' | 'date') => {
     if (sortBy === field) {
@@ -131,15 +112,10 @@ export function LeadsTable({
         <p className="text-xs sm:text-sm text-slate-600">
           Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, total)} of {total} leads
         </p>
-        <div className="flex items-center gap-3">
-          <span className="text-xs sm:text-sm text-slate-600 font-mono">
-            {formatDateTime(currentTime)}
-          </span>
-          <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
-            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-            Export to Excel
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
+          <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+          Export to Excel
+        </Button>
       </div>
 
       <div className="overflow-x-auto -mx-px">
