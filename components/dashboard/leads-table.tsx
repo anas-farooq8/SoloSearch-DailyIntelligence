@@ -43,6 +43,18 @@ function getScoreBand(score: number) {
   return { label: "Low", emoji: "", color: "bg-slate-100 text-slate-800" }
 }
 
+// Group mapping: maps group IDs to group names
+const GROUP_MAPPING: Record<string, string> = {
+  "1": "NHS Contracts",
+  "2": "Startup Funding & Grants",
+  "3": "HealthTech Media Coverage",
+}
+
+function getGroupName(groupId: string | null | undefined): string {
+  if (!groupId) return "-"
+  return GROUP_MAPPING[groupId] || groupId
+}
+
 type SortField = 'score' | 'date' | 'company' | 'group' | 'location'
 
 export function LeadsTable({
@@ -453,8 +465,8 @@ export function LeadsTable({
                     </p>
                   </TableCell>
                   <TableCell className="max-w-[125px] px-3">
-                    <p className="text-xs sm:text-sm text-slate-600 truncate" title={article.group_name}>
-                      {article.group_name || "-"}
+                    <p className="text-xs sm:text-sm text-slate-600 truncate" title={getGroupName(article.group_name)}>
+                      {getGroupName(article.group_name)}
                     </p>
                   </TableCell>
                   <TableCell className="px-3">
@@ -689,7 +701,7 @@ export function LeadsTable({
                   {selectedArticle.group_name && (
                     <div>
                       <h4 className="text-xs sm:text-sm font-semibold text-slate-600 mb-1 sm:mb-2">Group</h4>
-                      <p className="text-sm sm:text-base text-slate-900 font-medium break-words">{selectedArticle.group_name}</p>
+                      <p className="text-sm sm:text-base text-slate-900 font-medium break-words">{getGroupName(selectedArticle.group_name)}</p>
                     </div>
                   )}
                   {selectedArticle.buyer && (

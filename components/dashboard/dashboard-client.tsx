@@ -123,6 +123,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const [addingTagId, setAddingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
   const [removingTagId, setRemovingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
   const [activeView, setActiveView] = useState<"active" | "hidden">("active")
+  const [defaultFilterApplied, setDefaultFilterApplied] = useState(false)
 
   // Save page to localStorage whenever it changes
   useEffect(() => {
@@ -174,6 +175,25 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     )
     return notRelevantTag?.id || null
   }, [dashboardData?.tags])
+
+  // Apply default sector filter on initial load (only once when data loads)
+  useEffect(() => {
+    // Only apply default filter if:
+    // 1. Dashboard data has loaded (not loading)
+    // 2. Sectors data exists
+    // 3. We haven't already applied the default filter
+    if (!isLoading && dashboardData?.filterOptions?.sectors && !defaultFilterApplied) {
+      const healthMedSectors = dashboardData.filterOptions.sectors.filter((sector) => {
+        const lowerSector = sector.toLowerCase()
+        return lowerSector.includes('health') || lowerSector.includes('med')
+      })
+      
+      if (healthMedSectors.length > 0) {
+        setFilters((prev) => ({ ...prev, sectors: healthMedSectors }))
+        setDefaultFilterApplied(true)
+      }
+    }
+  }, [dashboardData?.filterOptions?.sectors, isLoading, defaultFilterApplied])
 
   // Separate articles into active and hidden (Not Relevant)
   const { activeArticles, hiddenArticles } = useMemo(() => {
