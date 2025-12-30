@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X, Loader2, MessageSquare } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X, Loader2, MessageSquare, Eye, EyeOff } from "lucide-react"
 import type { Article, Tag, Filters } from "@/types/database"
 import { exportToExcel } from "@/lib/export"
 
@@ -29,6 +29,11 @@ interface LeadsTableProps {
   addingTagId: string | null
   removingTagId: string | null
   onNoteUpdate?: (articleId: string, note: any | null) => void
+  // View switcher props
+  activeView: "active" | "hidden"
+  onViewChange: (view: "active" | "hidden") => void
+  activeCount: number
+  hiddenCount: number
 }
 
 function getScoreBand(score: number) {
@@ -53,6 +58,10 @@ export function LeadsTable({
   addingTagId,
   removingTagId,
   onNoteUpdate,
+  activeView,
+  onViewChange,
+  activeCount,
+  hiddenCount,
 }: LeadsTableProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<SortField | null>(null)
@@ -256,6 +265,65 @@ export function LeadsTable({
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+      {/* View Switcher + Info Row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 py-3 border-b border-slate-100 gap-3 sm:gap-0">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+          <button
+            onClick={() => onViewChange("active")}
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
+              ${activeView === "active" 
+                ? "bg-white text-slate-900 shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }
+            `}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Active Leads</span>
+            <span className="sm:hidden">Active</span>
+            <span className={`
+              px-2 py-0.5 rounded-full text-xs font-semibold
+              ${activeView === "active" 
+                ? "bg-blue-100 text-blue-700" 
+                : "bg-slate-200 text-slate-600"
+              }
+            `}>
+              {activeCount.toLocaleString()}
+            </span>
+          </button>
+          
+          <button
+            onClick={() => onViewChange("hidden")}
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer
+              ${activeView === "hidden" 
+                ? "bg-white text-slate-900 shadow-sm" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              }
+            `}
+          >
+            <EyeOff className="h-4 w-4" />
+            <span className="hidden sm:inline">Not Relevant</span>
+            <span className="sm:hidden">Hidden</span>
+            <span className={`
+              px-2 py-0.5 rounded-full text-xs font-semibold
+              ${activeView === "hidden" 
+                ? "bg-slate-600 text-white" 
+                : "bg-slate-200 text-slate-600"
+              }
+            `}>
+              {hiddenCount.toLocaleString()}
+            </span>
+          </button>
+        </div>
+
+        {activeView === "hidden" && (
+          <p className="text-xs text-slate-500 italic hidden md:block">
+            Remove the &quot;Not Relevant&quot; tag to restore items
+          </p>
+        )}
+      </div>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-b border-slate-200 gap-2 sm:gap-0">
         <p className="text-xs sm:text-sm text-slate-600">
           Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, total)} of {total} leads

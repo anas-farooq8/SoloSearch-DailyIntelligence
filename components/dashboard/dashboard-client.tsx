@@ -122,6 +122,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const [showHowItWorks, setShowHowItWorks] = useState(false)
   const [addingTagId, setAddingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
   const [removingTagId, setRemovingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
+  const [activeView, setActiveView] = useState<"active" | "hidden">("active")
 
   // Save page to localStorage whenever it changes
   useEffect(() => {
@@ -166,13 +167,42 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     dedupingInterval: 10000, // Cache for 10 seconds
   })
 
-  // Apply filters on client-side
-  const filteredArticles = useMemo(() => {
-    if (!dashboardData?.articles) return []
-    return applyFilters(dashboardData.articles, filters)
-  }, [dashboardData?.articles, filters])
+  // Find the "Not Relevant" tag ID
+  const notRelevantTagId = useMemo(() => {
+    const notRelevantTag = dashboardData?.tags.find(
+      (tag) => tag.name.toLowerCase() === "not relevant"
+    )
+    return notRelevantTag?.id || null
+  }, [dashboardData?.tags])
 
-  // Calculate KPIs using local timezone
+  // Separate articles into active and hidden (Not Relevant)
+  const { activeArticles, hiddenArticles } = useMemo(() => {
+    if (!dashboardData?.articles) return { activeArticles: [], hiddenArticles: [] }
+    
+    const active: Article[] = []
+    const hidden: Article[] = []
+    
+    dashboardData.articles.forEach((article) => {
+      const hasNotRelevantTag = article.tags?.some(
+        (tag) => tag.name.toLowerCase() === "not relevant"
+      )
+      if (hasNotRelevantTag) {
+        hidden.push(article)
+      } else {
+        active.push(article)
+      }
+    })
+    
+    return { activeArticles: active, hiddenArticles: hidden }
+  }, [dashboardData?.articles])
+
+  // Apply filters on client-side based on active view
+  const filteredArticles = useMemo(() => {
+    const articlesToFilter = activeView === "active" ? activeArticles : hiddenArticles
+    return applyFilters(articlesToFilter, filters)
+  }, [activeArticles, hiddenArticles, activeView, filters])
+
+  // Calculate KPIs using local timezone - from ALL articles
   const kpis = useMemo(() => {
     if (!dashboardData?.articles) return dashboardData?.kpis
     return calculateKPIs(dashboardData.articles)
@@ -199,6 +229,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }))
     setPage(0) // Reset to first page when filters change
+  }, [])
+
+  const handleViewChange = useCallback((view: "active" | "hidden") => {
+    setActiveView(view)
+    setPage(0) // Reset to first page when switching views
   }, [])
 
   const handleTagUpdate = async (articleId: string, tagId: string, action: "add" | "remove") => {
@@ -356,6 +391,10 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           addingTagId={addingTagId}
           removingTagId={removingTagId}
           onNoteUpdate={handleNoteUpdate}
+          activeView={activeView}
+          onViewChange={handleViewChange}
+          activeCount={activeArticles.length}
+          hiddenCount={hiddenArticles.length}
         />
       </main>
 
