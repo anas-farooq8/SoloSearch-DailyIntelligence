@@ -143,3 +143,47 @@ create policy "Allow authenticated users to update article_tags" on public.artic
 create policy "Allow authenticated users to delete article_tags" on public.article_tags
   for DELETE
   using (auth.role() = 'authenticated');
+
+-- Notes table (one-to-one relationship with articles)
+create table public.notes (
+  id uuid not null default extensions.uuid_generate_v4 (),
+  article_id bigint not null,
+  content text not null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint notes_pkey primary key (id),
+  constraint notes_article_id_key unique (article_id),
+  constraint notes_article_id_fkey foreign KEY (article_id) references articles (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+-- Indexes for notes
+create index IF not exists idx_notes_article_id on public.notes using btree (article_id) TABLESPACE pg_default;
+create index IF not exists idx_notes_created_at on public.notes using btree (created_at desc) TABLESPACE pg_default;
+create index IF not exists idx_notes_updated_at on public.notes using btree (updated_at desc) TABLESPACE pg_default;
+
+create trigger trg_notes_set_updated_at BEFORE
+update on notes for EACH row
+execute FUNCTION set_updated_at ();
+
+-- RLS Policies for notes
+alter table public.notes enable ROW level security;
+
+-- Allow authenticated users to read all notes
+create policy "Allow authenticated users to read notes" on public.notes
+  for SELECT
+  using (auth.role() = 'authenticated');
+
+-- Allow authenticated users to insert notes
+create policy "Allow authenticated users to insert notes" on public.notes
+  for INSERT
+  with CHECK (auth.role() = 'authenticated');
+
+-- Allow authenticated users to update notes
+create policy "Allow authenticated users to update notes" on public.notes
+  for UPDATE
+  using (auth.role() = 'authenticated');
+
+-- Allow authenticated users to delete notes
+create policy "Allow authenticated users to delete notes" on public.notes
+  for DELETE
+  using (auth.role() = 'authenticated');

@@ -16,7 +16,7 @@ export async function GET() {
 
     // Fetch all data in parallel - only articles and tags
     const [articlesResult, tagsResult] = await Promise.all([
-      // Fetch only the necessary fields for processed articles with their tags
+      // Fetch only the necessary fields for processed articles with their tags and notes
       supabase
         .from("articles")
         .select(
@@ -46,6 +46,12 @@ export async function GET() {
               name,
               color
             )
+          ),
+          notes (
+            id,
+            content,
+            created_at,
+            updated_at
           )
         `
         )
@@ -66,12 +72,15 @@ export async function GET() {
       return NextResponse.json({ error: tagsResult.error.message }, { status: 500 })
     }
 
-    // Process articles to flatten tag structure and remove article_tags
-    const articles = (articlesResult.data || []).map((article) => {
-      const { article_tags, ...articleData } = article
+    // Process articles to flatten tag structure and remove article_tags, handle notes
+    const articles = (articlesResult.data || []).map((article: any) => {
+      const { article_tags, notes, ...articleData } = article
+      
       return {
         ...articleData,
         tags: article_tags?.map((at: any) => at.tag).filter(Boolean) || [],
+        // Notes is an object (one-to-one relationship), not an array
+        note: notes || null,
       }
     })
 

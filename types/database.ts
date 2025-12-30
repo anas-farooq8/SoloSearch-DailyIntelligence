@@ -19,6 +19,7 @@ export interface Article {
   location_region: string
   location_country: string
   tags?: Tag[]
+  note?: Note | null
 }
 
 export interface Tag {
@@ -32,6 +33,14 @@ export interface ArticleTag {
   id: string
   article_id: string
   tag_id: string
+}
+
+export interface Note {
+  id: string
+  article_id: string
+  content: string
+  created_at: string
+  updated_at: string
 }
 
 export interface KPIStats {

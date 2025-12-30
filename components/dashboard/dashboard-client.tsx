@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import type { Article, Tag, KPIStats, Filters } from "@/types/database"
@@ -97,7 +97,17 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
 
 export function DashboardClient({ userId }: DashboardClientProps) {
   const supabase = createClient()
-  const [page, setPage] = useState(0)
+  
+  // Initialize page from localStorage or default to 0
+  const initialPage = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const savedPage = localStorage.getItem('dashboard-page')
+      return savedPage ? Math.max(0, parseInt(savedPage, 10)) : 0
+    }
+    return 0
+  }, [])
+  
+  const [page, setPage] = useState(initialPage)
   const [filters, setFilters] = useState<Filters>({
     search: "",
     minScore: null,
@@ -112,6 +122,13 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   const [showHowItWorks, setShowHowItWorks] = useState(false)
   const [addingTagId, setAddingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
   const [removingTagId, setRemovingTagId] = useState<string | null>(null) // Format: "articleId:tagId"
+
+  // Save page to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dashboard-page', page.toString())
+    }
+  }, [page])
 
   // Helper function to calculate all KPIs using local timezone
   const calculateKPIs = useCallback((articles: Article[]): KPIStats => {
@@ -163,11 +180,21 @@ export function DashboardClient({ userId }: DashboardClientProps) {
 
   // Paginate filtered articles
   const pageSize = 50
+  const totalPages = Math.ceil(filteredArticles.length / pageSize)
+  
+  // Ensure page is within valid bounds
+  useEffect(() => {
+    if (totalPages > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1))
+    }
+  }, [totalPages, page])
+  
   const paginatedArticles = useMemo(() => {
-    const start = page * pageSize
+    const validPage = totalPages > 0 ? Math.min(page, totalPages - 1) : 0
+    const start = validPage * pageSize
     const end = start + pageSize
     return filteredArticles.slice(start, end)
-  }, [filteredArticles, page])
+  }, [filteredArticles, page, totalPages])
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }))
@@ -276,6 +303,23 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     }
   }
 
+  const handleNoteUpdate = (articleId: string, note: any | null) => {
+    // Update local state with new note without refetching from server
+    if (dashboardData) {
+      const updatedArticles = dashboardData.articles.map(article => {
+        if (article.id === articleId) {
+          return {
+            ...article,
+            note: note
+          }
+        }
+        return article
+      })
+      
+      mutateDashboard({ ...dashboardData, articles: updatedArticles }, false)
+    }
+  }
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = "/login"
@@ -289,7 +333,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         onShowGuide={() => setShowHowItWorks(true)}
       />
 
-      <main className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <KPICards kpis={kpis} loading={isLoading} />
 
         <FiltersBar
@@ -311,6 +355,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           userId={userId}
           addingTagId={addingTagId}
           removingTagId={removingTagId}
+          onNoteUpdate={handleNoteUpdate}
         />
       </main>
 

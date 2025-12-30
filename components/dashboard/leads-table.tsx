@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, ExternalLink, Download, Plus, ArrowUpDown, ArrowUp, ArrowDown, X, Loader2, MessageSquare } from "lucide-react"
 import type { Article, Tag, Filters } from "@/types/database"
 import { exportToExcel } from "@/lib/export"
 
@@ -28,6 +28,7 @@ interface LeadsTableProps {
   userId: string
   addingTagId: string | null
   removingTagId: string | null
+  onNoteUpdate?: (articleId: string, note: any | null) => void
 }
 
 function getScoreBand(score: number) {
@@ -36,6 +37,8 @@ function getScoreBand(score: number) {
   if (score >= 4) return { label: "Monitor", emoji: "", color: "bg-amber-100 text-amber-800" }
   return { label: "Low", emoji: "", color: "bg-slate-100 text-slate-800" }
 }
+
+type SortField = 'score' | 'date' | 'company' | 'group' | 'location'
 
 export function LeadsTable({
   articles,
@@ -49,14 +52,20 @@ export function LeadsTable({
   userId,
   addingTagId,
   removingTagId,
+  onNoteUpdate,
 }: LeadsTableProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
-  const [sortBy, setSortBy] = useState<'score' | 'date' | null>(null)
+  const [sortBy, setSortBy] = useState<SortField | null>(null)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [hoveredArticleId, setHoveredArticleId] = useState<string | null>(null)
+  const [noteContent, setNoteContent] = useState("")
+  const [isEditingNote, setIsEditingNote] = useState(false)
+  const [isSavingNote, setIsSavingNote] = useState(false)
+  const [isDeletingNote, setIsDeletingNote] = useState(false)
   const pageSize = 50
   const totalPages = Math.ceil(total / pageSize)
 
-  const handleSort = (field: 'score' | 'date') => {
+  const handleSort = (field: SortField) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
     } else {
@@ -68,22 +77,161 @@ export function LeadsTable({
   const sortedArticles = [...articles].sort((a, b) => {
     if (!sortBy) return 0
     
-    if (sortBy === 'score') {
-      const diff = a.lead_score - b.lead_score
-      return sortOrder === 'asc' ? diff : -diff
-    } else if (sortBy === 'date') {
-      const dateA = new Date(a.updated_at).getTime()
-      const dateB = new Date(b.updated_at).getTime()
-      const diff = dateA - dateB
-      return sortOrder === 'asc' ? diff : -diff
+    let diff = 0
+    let aEmpty = false
+    let bEmpty = false
+    
+    switch (sortBy) {
+      case 'score':
+        aEmpty = a.lead_score === null || a.lead_score === undefined
+        bEmpty = b.lead_score === null || b.lead_score === undefined
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1 // a goes to end
+        if (bEmpty) return -1 // b goes to end
+        diff = (a.lead_score || 0) - (b.lead_score || 0)
+        break
+      case 'date':
+        aEmpty = !a.updated_at
+        bEmpty = !b.updated_at
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1
+        if (bEmpty) return -1
+        diff = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+        break
+      case 'company':
+        aEmpty = !a.company || a.company.trim() === ''
+        bEmpty = !b.company || b.company.trim() === ''
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1
+        if (bEmpty) return -1
+        const companyA = (a.company || '').toLowerCase()
+        const companyB = (b.company || '').toLowerCase()
+        diff = companyA.localeCompare(companyB)
+        break
+      case 'group':
+        aEmpty = !a.group_name || a.group_name.trim() === ''
+        bEmpty = !b.group_name || b.group_name.trim() === ''
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1
+        if (bEmpty) return -1
+        const groupA = (a.group_name || '').toLowerCase()
+        const groupB = (b.group_name || '').toLowerCase()
+        diff = groupA.localeCompare(groupB)
+        break
+      case 'location':
+        const locationA = `${a.location_region || ''} ${a.location_country || ''}`.trim()
+        const locationB = `${b.location_region || ''} ${b.location_country || ''}`.trim()
+        aEmpty = locationA === ''
+        bEmpty = locationB === ''
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1
+        if (bEmpty) return -1
+        diff = locationA.toLowerCase().localeCompare(locationB.toLowerCase())
+        break
     }
-    return 0
+    
+    return sortOrder === 'asc' ? diff : -diff
   })
 
   const displayArticles = sortBy ? sortedArticles : articles
 
   const handleExport = async () => {
     await exportToExcel(articles, filters)
+  }
+
+  const handleOpenArticle = (article: Article) => {
+    setSelectedArticle(article)
+    setNoteContent(article.note?.content || "")
+    setIsEditingNote(false)
+  }
+
+  const handleSaveNote = async () => {
+    if (!selectedArticle || noteContent.trim().length === 0) return
+
+    setIsSavingNote(true)
+    try {
+      const endpoint = "/api/dashboard/notes"
+      let response
+
+      if (selectedArticle.note) {
+        // Update existing note
+        response = await fetch(endpoint, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            noteId: selectedArticle.note.id,
+            content: noteContent.trim(),
+          }),
+        })
+      } else {
+        // Create new note
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            articleId: selectedArticle.id,
+            content: noteContent.trim(),
+          }),
+        })
+      }
+
+      if (!response.ok) throw new Error("Failed to save note")
+
+      const { note } = await response.json()
+      
+      // Update the article in the local state
+      const updatedArticle = { ...selectedArticle, note }
+      setSelectedArticle(updatedArticle)
+      setIsEditingNote(false)
+
+      // Update in parent context
+      if (onNoteUpdate) {
+        onNoteUpdate(selectedArticle.id, note)
+      }
+    } catch (error) {
+      console.error("Error saving note:", error)
+      alert("Failed to save note. Please try again.")
+    } finally {
+      setIsSavingNote(false)
+    }
+  }
+
+  const handleDeleteNote = async () => {
+    if (!selectedArticle?.note) return
+
+    setIsDeletingNote(true)
+    try {
+      const response = await fetch(`/api/dashboard/notes?noteId=${selectedArticle.note.id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) throw new Error("Failed to delete note")
+
+      // Update the article in the local state
+      const updatedArticle = { ...selectedArticle, note: null }
+      setSelectedArticle(updatedArticle)
+      setNoteContent("")
+      setIsEditingNote(false)
+
+      // Update in parent context
+      if (onNoteUpdate) {
+        onNoteUpdate(selectedArticle.id, null)
+      }
+    } catch (error) {
+      console.error("Error deleting note:", error)
+      alert("Failed to delete note. Please try again.")
+    } finally {
+      setIsDeletingNote(false)
+    }
+  }
+
+  const handleStartEdit = () => {
+    setIsEditingNote(true)
+  }
+
+  const handleCancelEdit = () => {
+    setNoteContent(selectedArticle?.note?.content || "")
+    setIsEditingNote(false)
   }
 
   if (loading) {
@@ -108,7 +256,7 @@ export function LeadsTable({
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border-b border-slate-200 gap-2 sm:gap-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-b border-slate-200 gap-2 sm:gap-0">
         <p className="text-xs sm:text-sm text-slate-600">
           Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, total)} of {total} leads
         </p>
@@ -118,11 +266,12 @@ export function LeadsTable({
         </Button>
       </div>
 
+      {/* Table with horizontal scroll */}
       <div className="overflow-x-auto -mx-px">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px] min-w-[100px]">
+              <TableHead className="w-[85px] min-w-[85px] pl-4">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -137,13 +286,41 @@ export function LeadsTable({
                   )}
                 </Button>
               </TableHead>
-              <TableHead className="w-[180px] min-w-[150px]">Company</TableHead>
-              <TableHead className="w-[150px] min-w-[120px]">Group</TableHead>
-              <TableHead className="min-w-[120px]">Sector</TableHead>
-              <TableHead className="min-w-[120px]">Signals</TableHead>
-              <TableHead className="min-w-[100px]">Amount</TableHead>
-              <TableHead className="min-w-[100px]">Source</TableHead>
-              <TableHead className="min-w-[140px]">
+              <TableHead className="w-[145px] min-w-[125px] px-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('company')}
+                  className="h-8 px-2 hover:bg-slate-100 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  Company
+                  {sortBy === 'company' ? (
+                    sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead className="w-[125px] min-w-[105px] px-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('group')}
+                  className="h-8 px-2 hover:bg-slate-100 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  Group
+                  {sortBy === 'group' ? (
+                    sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead className="w-[115px] min-w-[100px] px-3">Sector</TableHead>
+              <TableHead className="w-[115px] min-w-[100px] px-3">Signals</TableHead>
+              <TableHead className="w-[105px] min-w-[90px] px-3">Amount</TableHead>
+              <TableHead className="w-[105px] min-w-[90px] px-3">Source</TableHead>
+              <TableHead className="w-[115px] min-w-[100px] px-3">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -158,8 +335,22 @@ export function LeadsTable({
                   )}
                 </Button>
               </TableHead>
-              <TableHead className="min-w-[120px]">Tags</TableHead>
-              <TableHead className="min-w-[120px]">Location</TableHead>
+              <TableHead className="w-[125px] min-w-[105px] px-3">Tags</TableHead>
+              <TableHead className="w-[115px] min-w-[100px] px-3 pr-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('location')}
+                  className="h-8 px-2 hover:bg-slate-100 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  Location
+                  {sortBy === 'location' ? (
+                    sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -167,29 +358,38 @@ export function LeadsTable({
               const band = getScoreBand(article.lead_score)
               const articleTags = article.tags || []
 
+              const hasNote = !!article.note
+              const isHovered = hoveredArticleId === article.id
+
               return (
                 <TableRow 
                   key={article.id} 
-                  className="hover:bg-slate-50 cursor-pointer"
-                  onClick={() => setSelectedArticle(article)}
+                  className={`cursor-pointer ${
+                    hasNote 
+                      ? 'bg-amber-50 hover:bg-amber-100' 
+                      : 'hover:bg-slate-50'
+                  }`}
+                  onClick={() => handleOpenArticle(article)}
+                  onMouseEnter={() => hasNote && setHoveredArticleId(article.id)}
+                  onMouseLeave={() => setHoveredArticleId(null)}
                 >
-                  <TableCell className="pl-4 sm:pl-5">
+                  <TableCell className="pl-5">
                     <Badge className={`${band.color} text-xs`}>
                       {article.lead_score}
                     </Badge>
                     <p className="text-[10px] sm:text-xs text-slate-500 mt-1 leading-tight">{band.label}</p>
                   </TableCell>
-                  <TableCell className="max-w-[180px]">
+                  <TableCell className="max-w-[145px] px-3">
                     <p className="text-xs sm:text-sm text-slate-900 font-medium truncate" title={article.company}>
                       {article.company || "-"}
                     </p>
                   </TableCell>
-                  <TableCell className="max-w-[150px]">
+                  <TableCell className="max-w-[125px] px-3">
                     <p className="text-xs sm:text-sm text-slate-600 truncate" title={article.group_name}>
                       {article.group_name || "-"}
                     </p>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3">
                     <div className="flex flex-wrap gap-1">
                       {(article.sector || []).slice(0, 2).map((s) => (
                         <Badge key={s} variant="secondary" className="text-[10px] sm:text-xs">
@@ -203,7 +403,7 @@ export function LeadsTable({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3">
                     <div className="flex flex-wrap gap-1">
                       {(article.trigger_signal || []).slice(0, 2).map((t) => (
                         <Badge key={t} variant="outline" className="text-[10px] sm:text-xs">
@@ -217,10 +417,10 @@ export function LeadsTable({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3">
                     <p className="text-xs sm:text-sm text-slate-600">{article.amount || "-"}</p>
                   </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="px-3">
                     <a
                       href={article.url}
                       target="_blank"
@@ -231,12 +431,12 @@ export function LeadsTable({
                       <ExternalLink className="h-3 w-3 flex-shrink-0" />
                     </a>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3">
                     <p className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">
                       {new Date(article.updated_at).toLocaleDateString()}
                     </p>
                   </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="px-3">
                     <div className="flex flex-wrap gap-1">
                       {articleTags.map((tag) => {
                         const isRemoving = removingTagId === `${article.id}:${tag.id}`
@@ -320,7 +520,7 @@ export function LeadsTable({
                       </DropdownMenu>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3 pr-3">
                     <p className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">
                       {article.location_region && `${article.location_region}, `}
                       {article.location_country}
@@ -334,7 +534,7 @@ export function LeadsTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-3 sm:p-4 border-t border-slate-200 gap-2 sm:gap-0">
+      <div className="flex flex-col sm:flex-row items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-t border-slate-200 gap-2 sm:gap-0">
         <p className="text-xs sm:text-sm text-slate-600">
           Page {page + 1} of {totalPages}
         </p>
@@ -363,6 +563,27 @@ export function LeadsTable({
           </Button>
         </div>
       </div>
+
+      {/* Note Hover Tooltip - Right side */}
+      {hoveredArticleId && (() => {
+        const article = displayArticles.find(a => a.id === hoveredArticleId)
+        if (!article?.note) return null
+        
+        return (
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[9999] w-80 p-4 bg-white border-2 border-amber-400 rounded-lg shadow-2xl pointer-events-none">
+            <div className="flex items-start gap-2 mb-2">
+              <MessageSquare className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="font-bold text-slate-900 text-sm">Notes</p>
+            </div>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
+              {article.note.content}
+            </p>
+            <p className="text-[10px] text-slate-500 mt-3 pt-2 border-t border-slate-200">
+              Updated: {new Date(article.note.updated_at).toLocaleString()}
+            </p>
+          </div>
+        )
+      })()}
 
       {/* Article Detail Modal */}
       {selectedArticle && (
@@ -552,6 +773,98 @@ export function LeadsTable({
                     <p className="text-xs sm:text-sm text-slate-500">No tags assigned</p>
                   )}
                 </div>
+              </div>
+
+              {/* Notes Section - Redesigned */}
+              <div className="bg-white border-2 border-slate-200 rounded-xl p-4 sm:p-5 md:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-amber-100 rounded-lg p-2.5">
+                      <MessageSquare className="h-5 w-5 text-amber-700" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Notes</h3>
+                  </div>
+                  {!isEditingNote && selectedArticle.note && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleStartEdit}
+                        disabled={isSavingNote || isDeletingNote}
+                        className="text-xs h-8"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeleteNote}
+                        disabled={isSavingNote || isDeletingNote}
+                        className="text-xs h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        {isDeletingNote ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {isEditingNote || !selectedArticle.note ? (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        placeholder="Type your notes here..."
+                        className="w-full min-h-[120px] p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-y bg-slate-50"
+                        disabled={isSavingNote}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleSaveNote}
+                        disabled={isSavingNote || noteContent.trim().length === 0}
+                        className="text-sm h-9 px-6 bg-amber-600 hover:bg-amber-700"
+                      >
+                        {isSavingNote ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </Button>
+                      {isEditingNote && selectedArticle.note && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                          disabled={isSavingNote}
+                          className="text-sm h-9 px-6"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                        {selectedArticle.note.content}
+                      </p>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Updated {new Date(selectedArticle.note.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             {/* close scroll container */}
