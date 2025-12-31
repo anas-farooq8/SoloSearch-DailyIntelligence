@@ -54,6 +54,7 @@ export interface Filters {
   search: string
   minScore: number | null
   maxScore: number | null
+  sectorGroup: 'all' | 'health' | 'others' | null
   sectors: string[]
   triggers: string[]
   country: string | null

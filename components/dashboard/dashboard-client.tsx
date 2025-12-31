@@ -112,6 +112,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     search: "",
     minScore: null,
     maxScore: null,
+    sectorGroup: null,
     sectors: [],
     triggers: [],
     country: null,
@@ -176,24 +177,43 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     return notRelevantTag?.id || null
   }, [dashboardData?.tags])
 
-  // Apply default sector filter on initial load (only once when data loads)
+  // Apply default sector group filter on initial load (only once when data loads)
   useEffect(() => {
     // Only apply default filter if:
     // 1. Dashboard data has loaded (not loading)
     // 2. Sectors data exists
     // 3. We haven't already applied the default filter
     if (!isLoading && dashboardData?.filterOptions?.sectors && !defaultFilterApplied) {
-      const healthMedSectors = dashboardData.filterOptions.sectors.filter((sector) => {
+      setFilters((prev) => ({ ...prev, sectorGroup: 'health' }))
+      setDefaultFilterApplied(true)
+    }
+  }, [dashboardData?.filterOptions?.sectors, isLoading, defaultFilterApplied])
+
+  // Update sectors based on sectorGroup selection
+  useEffect(() => {
+    if (!dashboardData?.filterOptions?.sectors) return
+
+    const allSectors = dashboardData.filterOptions.sectors
+
+    if (filters.sectorGroup === 'health') {
+      // Select all health/med related sectors
+      const healthSectors = allSectors.filter((sector) => {
         const lowerSector = sector.toLowerCase()
         return lowerSector.includes('health') || lowerSector.includes('med')
       })
-      
-      if (healthMedSectors.length > 0) {
-        setFilters((prev) => ({ ...prev, sectors: healthMedSectors }))
-        setDefaultFilterApplied(true)
-      }
+      setFilters((prev) => ({ ...prev, sectors: healthSectors }))
+    } else if (filters.sectorGroup === 'others') {
+      // Select all non-health/med sectors
+      const otherSectors = allSectors.filter((sector) => {
+        const lowerSector = sector.toLowerCase()
+        return !lowerSector.includes('health') && !lowerSector.includes('med')
+      })
+      setFilters((prev) => ({ ...prev, sectors: otherSectors }))
+    } else if (filters.sectorGroup === 'all') {
+      // Clear sector filter to show all
+      setFilters((prev) => ({ ...prev, sectors: [] }))
     }
-  }, [dashboardData?.filterOptions?.sectors, isLoading, defaultFilterApplied])
+  }, [filters.sectorGroup, dashboardData?.filterOptions?.sectors])
 
   // Separate articles into active and hidden (Not Relevant)
   const { activeArticles, hiddenArticles } = useMemo(() => {

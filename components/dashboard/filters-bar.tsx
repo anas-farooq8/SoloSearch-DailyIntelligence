@@ -36,6 +36,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
       search: "",
       minScore: 5,
       maxScore: 10,
+      sectorGroup: null,
       sectors: [],
       triggers: [],
       country: null,
@@ -47,6 +48,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
   const hasActiveFilters =
     filters.search ||
     filters.minScore !== null ||
+    filters.sectorGroup !== null ||
     filters.sectors.length > 0 ||
     filters.triggers.length > 0 ||
     filters.country ||
@@ -56,70 +58,80 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
   // Prevent hydration mismatch by only rendering dropdowns after mount
   if (!mounted) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Search - safe to render */}
-          <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        {/* Top Row: Search + Clear Button */}
+        <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-100">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Search..."
+              placeholder="Search titles, companies, opportunities..."
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value })}
-              className="pl-9 h-9 text-sm"
+              className="pl-9 h-10 text-sm"
             />
           </div>
-          {/* Placeholder buttons for layout */}
-          <div className="flex-1 sm:flex-none sm:w-[200px] h-9" />
-          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
-            Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
-            <ChevronDown className="ml-2 h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={clearFilters} 
+            className="cursor-pointer h-10 px-4 text-sm whitespace-nowrap"
+          >
+            <X className="h-4 w-4 mr-1.5" />
+            Clear
           </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent h-9 text-sm" disabled>
-            Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none sm:w-[120px] bg-transparent h-9 text-sm" disabled>
-            {filters.country || "Countries"}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[100px] bg-transparent h-9 text-sm" disabled>
-            Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer h-9 text-sm w-full sm:w-auto">
-              <X className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          )}
+        </div>
+
+        {/* Filters Grid - Placeholder */}
+        <div className="p-3 sm:p-4 space-y-4">
+          <div className="flex flex-col gap-2 w-full bg-slate-50 p-3 rounded-lg border border-slate-200 animate-pulse">
+            <div className="h-4 bg-slate-300 rounded w-32"></div>
+            <div className="h-8 bg-slate-300 rounded"></div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="h-10 bg-slate-100 rounded border border-slate-200 animate-pulse"></div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-3 sm:p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        {/* Search */}
-        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+      {/* Top Row: Search + Clear Button */}
+      <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-100">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search..."
+            placeholder="Search titles, companies, opportunities..."
             value={filters.search}
             onChange={(e) => onFilterChange({ search: e.target.value })}
-            className="pl-9 h-9 text-sm"
+            className="pl-9 h-10 text-sm"
           />
         </div>
+        <Button 
+          variant={hasActiveFilters ? "default" : "outline"} 
+          size="sm" 
+          onClick={clearFilters} 
+          className="cursor-pointer h-10 px-4 text-sm whitespace-nowrap"
+        >
+          <X className="h-4 w-4 mr-1.5" />
+          Clear
+        </Button>
+      </div>
 
+      {/* Filters Grid */}
+      <div className="p-3 sm:p-4 space-y-4">
         {/* Score Range Slider - Dual handles for min and max */}
-        <div className="flex flex-col gap-2 flex-1 sm:flex-none sm:w-[300px]">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>
-              Score: {filters.minScore ?? 5} - {filters.maxScore ?? 10}
-              {filters.minScore === filters.maxScore && filters.minScore !== null && " (exact match)"}
+        <div className="flex flex-col gap-2 w-full bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Lead Score Range</span>
+            <span className="text-sm font-bold text-blue-600">
+              {filters.minScore ?? 5} - {filters.maxScore ?? 10}
             </span>
           </div>
-          <div className="relative h-8 flex items-center">
+          <div className="relative h-8 flex items-center mt-1">
             {/* Track background */}
             <div className="absolute w-full h-2 bg-slate-200 rounded-full pointer-events-none"></div>
             {/* Active track */}
@@ -207,21 +219,90 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           `}</style>
         </div>
 
-        {/* Sectors Multi-select */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
-              Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+        {/* Filter Buttons Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+          {/* Sector Group Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.sectorGroup ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">
+                  {filters.sectorGroup === 'health' && 'Health-related'}
+                  {filters.sectorGroup === 'others' && 'Other Sectors'}
+                  {filters.sectorGroup === 'all' && 'All Sectors'}
+                  {!filters.sectorGroup && 'Sector Group'}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuCheckboxItem
+              checked={!filters.sectorGroup}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ sectorGroup: null, sectors: [] })
+                }
+              }}
+            >
+              None
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={filters.sectorGroup === 'all'}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ sectorGroup: 'all' })
+                }
+              }}
+            >
+              All Sectors
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={filters.sectorGroup === 'health'}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ sectorGroup: 'health' })
+                }
+              }}
+            >
+              Health-related
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={filters.sectorGroup === 'others'}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ sectorGroup: 'others' })
+                }
+              }}
+            >
+              Other Sectors
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sectors Multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.sectors.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">Sectors {filters.sectors.length > 0 && `(${filters.sectors.length})`}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
             <DropdownMenuCheckboxItem
               key="all-sectors"
               checked={filters.sectors.length === 0}
               onCheckedChange={(checked) => {
                 if (checked) {
-                  onFilterChange({ sectors: [] })
+                  onFilterChange({ sectors: [], sectorGroup: null })
                 }
               }}
             >
@@ -234,6 +315,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
                 onCheckedChange={(checked) => {
                   onFilterChange({
                     sectors: checked ? [...filters.sectors, sector] : filters.sectors.filter((s) => s !== sector),
+                    sectorGroup: null, // Clear group when manually selecting sectors
                   })
                 }}
               >
@@ -241,16 +323,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
 
-        {/* Triggers Multi-select */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
-              Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          {/* Triggers Multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.triggers.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">Signals {filters.triggers.length > 0 && `(${filters.triggers.length})`}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
             <DropdownMenuCheckboxItem
               key="all-triggers"
@@ -277,16 +364,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
 
-        {/* Country */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:w-[120px] bg-transparent cursor-pointer h-9 text-sm">
-              {filters.country || "Countries"}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          {/* Country */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.country ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">{filters.country || "Countries"}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
             <DropdownMenuCheckboxItem
               key="all-countries"
@@ -313,16 +405,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
 
-        {/* Groups - Named categories */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[120px] bg-transparent cursor-pointer h-9 text-sm">
-              Groups {filters.groups.length > 0 && `(${filters.groups.length})`}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          {/* Groups - Named categories */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.groups.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">Groups {filters.groups.length > 0 && `(${filters.groups.length})`}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuCheckboxItem
               key="all-groups"
@@ -353,41 +450,39 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenu>
 
-        {/* Tags Multi-select */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-1 sm:flex-none sm:min-w-[100px] bg-transparent cursor-pointer h-9 text-sm">
-              Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {tags.map((tag) => (
-              <DropdownMenuCheckboxItem
-                key={tag.id}
-                checked={filters.tagIds.includes(tag.id)}
-                onCheckedChange={(checked) => {
-                  onFilterChange({
-                    tagIds: checked ? [...filters.tagIds, tag.id] : filters.tagIds.filter((id) => id !== tag.id),
-                  })
-                }}
+          {/* Tags Multi-select */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.tagIds.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
               >
-                <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: tag.color }} />
-                {tag.name}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="cursor-pointer h-9 text-sm w-full sm:w-auto">
-            <X className="h-4 w-4 mr-1" />
-            Clear
-          </Button>
-        )}
+                <span className="truncate">Tags {filters.tagIds.length > 0 && `(${filters.tagIds.length})`}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {tags.map((tag) => (
+                <DropdownMenuCheckboxItem
+                  key={tag.id}
+                  checked={filters.tagIds.includes(tag.id)}
+                  onCheckedChange={(checked) => {
+                    onFilterChange({
+                      tagIds: checked ? [...filters.tagIds, tag.id] : filters.tagIds.filter((id) => id !== tag.id),
+                    })
+                  }}
+                >
+                  <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   )
