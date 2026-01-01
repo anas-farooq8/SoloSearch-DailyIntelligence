@@ -67,6 +67,16 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
       if (!hasSector) return false
     }
 
+    // Special filter for "Others" sector group: exclude articles with ANY health-related sector
+    if (filters.sectorGroup === 'others') {
+      const articleSectors = article.sector || []
+      const hasHealthSector = articleSectors.some((sector) => {
+        const lowerSector = sector.toLowerCase()
+        return lowerSector.includes('health') || lowerSector.includes('med')
+      })
+      if (hasHealthSector) return false
+    }
+
     // Trigger filter
     if (filters.triggers && filters.triggers.length > 0) {
       const articleTriggers = article.trigger_signal || []
@@ -203,9 +213,10 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       })
       setFilters((prev) => ({ ...prev, sectors: healthSectors }))
     } else if (filters.sectorGroup === 'others') {
-      // Select all non-health/med sectors
+      // Select all non-health/med sectors (exclude any sector containing health or med keywords)
       const otherSectors = allSectors.filter((sector) => {
         const lowerSector = sector.toLowerCase()
+        // Exclude if it contains 'health' OR 'med' in any form
         return !lowerSector.includes('health') && !lowerSector.includes('med')
       })
       setFilters((prev) => ({ ...prev, sectors: otherSectors }))

@@ -36,7 +36,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
       search: "",
       minScore: 5,
       maxScore: 10,
-      sectorGroup: null,
+      sectorGroup: 'all',
       sectors: [],
       triggers: [],
       country: null,
@@ -227,60 +227,49 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               <Button 
                 variant="outline" 
                 className={`w-full justify-between cursor-pointer h-10 text-sm ${
-                  filters.sectorGroup ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                  filters.sectorGroup && filters.sectorGroup !== 'all' ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
                 }`}
               >
                 <span className="truncate">
                   {filters.sectorGroup === 'health' && 'Health-related'}
                   {filters.sectorGroup === 'others' && 'Other Sectors'}
-                  {filters.sectorGroup === 'all' && 'All Sectors'}
-                  {!filters.sectorGroup && 'Sector Group'}
+                  {(!filters.sectorGroup || filters.sectorGroup === 'all') && 'All Sectors'}
                 </span>
                 <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuCheckboxItem
-              checked={!filters.sectorGroup}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onFilterChange({ sectorGroup: null, sectors: [] })
-                }
-              }}
-            >
-              None
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.sectorGroup === 'all'}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onFilterChange({ sectorGroup: 'all' })
-                }
-              }}
-            >
-              All Sectors
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.sectorGroup === 'health'}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onFilterChange({ sectorGroup: 'health' })
-                }
-              }}
-            >
-              Health-related
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={filters.sectorGroup === 'others'}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onFilterChange({ sectorGroup: 'others' })
-                }
-              }}
-            >
-              Other Sectors
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
+            <DropdownMenuContent>
+              <DropdownMenuCheckboxItem
+                checked={filters.sectorGroup === 'all'}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ sectorGroup: 'all' })
+                  }
+                }}
+              >
+                All Sectors
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={filters.sectorGroup === 'health'}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ sectorGroup: 'health' })
+                  }
+                }}
+              >
+                Health-related
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={filters.sectorGroup === 'others'}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ sectorGroup: 'others' })
+                  }
+                }}
+              >
+                Other Sectors
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Sectors Multi-select */}
