@@ -76,9 +76,10 @@ export function LeadsTable({
   hiddenCount,
 }: LeadsTableProps) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
-  const [sortBy, setSortBy] = useState<SortField | null>(null)
+  const [sortBy, setSortBy] = useState<SortField | null>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [hoveredArticleId, setHoveredArticleId] = useState<string | null>(null)
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   const [noteContent, setNoteContent] = useState("")
   const [isEditingNote, setIsEditingNote] = useState(false)
   const [isSavingNote, setIsSavingNote] = useState(false)
@@ -450,8 +451,29 @@ export function LeadsTable({
                       : 'hover:bg-slate-50'
                   }`}
                   onClick={() => handleOpenArticle(article)}
-                  onMouseEnter={() => hasNote && setHoveredArticleId(article.id)}
-                  onMouseLeave={() => setHoveredArticleId(null)}
+                  onMouseEnter={(e) => {
+                    if (hasNote) {
+                      setHoveredArticleId(article.id)
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setTooltipPosition({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                      })
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (hasNote && hoveredArticleId === article.id) {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setTooltipPosition({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top
+                      })
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredArticleId(null)
+                    setTooltipPosition(null)
+                  }}
                 >
                   <TableCell className="pl-5">
                     <Badge className={`${band.color} text-xs`}>
@@ -601,7 +623,7 @@ export function LeadsTable({
                     </div>
                   </TableCell>
                   <TableCell className="px-3 pr-3">
-                    <p className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">
+                    <p className="text-xs sm:text-sm text-slate-600 truncate max-w-[100px]" title={`${article.location_region ? article.location_region + ', ' : ''}${article.location_country || ''}`}>
                       {article.location_region && `${article.location_region}, `}
                       {article.location_country}
                     </p>
@@ -644,13 +666,25 @@ export function LeadsTable({
         </div>
       </div>
 
-      {/* Note Hover Tooltip - Right side */}
-      {hoveredArticleId && (() => {
+      {/* Note Hover Tooltip - Dynamic Position */}
+      {hoveredArticleId && tooltipPosition && (() => {
         const article = displayArticles.find(a => a.id === hoveredArticleId)
         if (!article?.note) return null
         
+        // Calculate tooltip position to appear above the row, centered horizontally
+        const tooltipStyle: React.CSSProperties = {
+          position: 'fixed',
+          left: `${tooltipPosition.x}px`,
+          top: `${tooltipPosition.y - 10}px`,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 9999,
+        }
+        
         return (
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-[9999] w-80 p-4 bg-white border-2 border-amber-400 rounded-lg shadow-2xl pointer-events-none">
+          <div 
+            style={tooltipStyle}
+            className="w-80 p-4 bg-white border-2 border-amber-400 rounded-lg shadow-2xl pointer-events-none"
+          >
             <div className="flex items-start gap-2 mb-2">
               <MessageSquare className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="font-bold text-slate-900 text-sm">Notes</p>
@@ -661,6 +695,10 @@ export function LeadsTable({
             <p className="text-[10px] text-slate-500 mt-3 pt-2 border-t border-slate-200">
               Updated: {new Date(article.note.updated_at).toLocaleString()}
             </p>
+            {/* Arrow pointing down to the row */}
+            <div 
+              className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-amber-400"
+            />
           </div>
         )
       })()}
