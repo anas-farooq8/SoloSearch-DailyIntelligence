@@ -59,8 +59,9 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
   if (!mounted) {
     return (
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        {/* Top Row: Search + Clear Button */}
-        <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-100">
+        {/* Top Row: Search + Lead Score Range + Clear Button */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3 sm:p-4 border-b border-slate-100">
+          {/* Search Bar */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
@@ -70,11 +71,19 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               className="pl-9 h-10 text-sm"
             />
           </div>
+          
+          {/* Lead Score Range Placeholder */}
+          <div className="flex flex-col gap-2 md:w-[480px] bg-slate-50 p-3 rounded-lg border border-slate-200 animate-pulse">
+            <div className="h-4 bg-slate-300 rounded w-32"></div>
+            <div className="h-8 bg-slate-300 rounded"></div>
+          </div>
+          
+          {/* Clear Button */}
           <Button 
             variant="outline" 
             size="sm" 
             onClick={clearFilters} 
-            className="cursor-pointer h-10 px-4 text-sm whitespace-nowrap"
+            className="cursor-pointer h-10 md:w-[120px] px-4 text-sm whitespace-nowrap"
           >
             <X className="h-4 w-4 mr-1.5" />
             Clear
@@ -83,10 +92,6 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
 
         {/* Filters Grid - Placeholder */}
         <div className="p-3 sm:p-4 space-y-4">
-          <div className="flex flex-col gap-2 w-full bg-slate-50 p-3 rounded-lg border border-slate-200 animate-pulse">
-            <div className="h-4 bg-slate-300 rounded w-32"></div>
-            <div className="h-8 bg-slate-300 rounded"></div>
-          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
             {[...Array(7)].map((_, i) => (
               <div key={i} className="h-10 bg-slate-100 rounded border border-slate-200 animate-pulse"></div>
@@ -99,8 +104,9 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-      {/* Top Row: Search + Clear Button */}
-      <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-slate-100">
+      {/* Top Row: Search + Lead Score Range + Clear Button */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3 sm:p-4 border-b border-slate-100">
+        {/* Search Bar - takes more space on desktop */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -110,28 +116,16 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             className="pl-9 h-10 text-sm"
           />
         </div>
-        <Button 
-          variant={hasActiveFilters ? "default" : "outline"} 
-          size="sm" 
-          onClick={clearFilters} 
-          className="cursor-pointer h-10 px-4 text-sm whitespace-nowrap"
-        >
-          <X className="h-4 w-4 mr-1.5" />
-          Clear
-        </Button>
-      </div>
-
-      {/* Filters Grid */}
-      <div className="p-3 sm:p-4 space-y-4">
-        {/* Score Range Slider - Dual handles for min and max */}
-        <div className="flex flex-col gap-2 w-full bg-slate-50 p-3 rounded-lg border border-slate-200">
+        
+        {/* Lead Score Range - shows in row on desktop */}
+        <div className="flex flex-col gap-2 md:w-[480px] bg-slate-50 p-3 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Lead Score Range</span>
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Lead Score</span>
             <span className="text-sm font-bold text-blue-600">
               {filters.minScore ?? 5} - {filters.maxScore ?? 10}
             </span>
           </div>
-          <div className="relative h-8 flex items-center mt-1">
+          <div className="relative h-8 flex items-center">
             {/* Track background */}
             <div className="absolute w-full h-2 bg-slate-200 rounded-full pointer-events-none"></div>
             {/* Active track */}
@@ -218,6 +212,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
             }
           `}</style>
         </div>
+        
+        {/* Clear Button */}
+        <Button 
+          variant={hasActiveFilters ? "default" : "outline"} 
+          size="sm" 
+          onClick={clearFilters} 
+          className="cursor-pointer h-10 md:w-[120px] px-4 text-sm whitespace-nowrap"
+        >
+          <X className="h-4 w-4 mr-1.5" />
+          Clear
+        </Button>
+      </div>
+
+      {/* Filters Grid */}
+      <div className="p-3 sm:p-4 space-y-4">
 
         {/* Filter Buttons Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -355,47 +364,6 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Country */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                className={`w-full justify-between cursor-pointer h-10 text-sm ${
-                  filters.country ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
-                }`}
-              >
-                <span className="truncate">{filters.country || "Countries"}</span>
-                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
-            <DropdownMenuCheckboxItem
-              key="all-countries"
-              checked={!filters.country}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onFilterChange({ country: null })
-                }
-              }}
-            >
-              All Countries
-            </DropdownMenuCheckboxItem>
-            {filterOptions.countries.map((country) => (
-              <DropdownMenuCheckboxItem
-                key={country}
-                checked={filters.country === country}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    onFilterChange({ country })
-                  }
-                }}
-              >
-                {country}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* Groups - Named categories */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -436,6 +404,47 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
                 }}
               >
                 {group.name}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Country */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm ${
+                  filters.country ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">{filters.country || "Countries"}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-countries"
+              checked={!filters.country}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ country: null })
+                }
+              }}
+            >
+              All Countries
+            </DropdownMenuCheckboxItem>
+            {filterOptions.countries.map((country) => (
+              <DropdownMenuCheckboxItem
+                key={country}
+                checked={filters.country === country}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFilterChange({ country })
+                  }
+                }}
+              >
+                {country}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
