@@ -92,8 +92,18 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
     // Tag filter
     if (filters.tagIds && filters.tagIds.length > 0) {
       const articleTagIds = (article.tags as any[])?.map((t) => t.id) || []
-      const hasTag = filters.tagIds.some((tagId) => articleTagIds.includes(tagId))
-      if (!hasTag) return false
+      
+      // Check if user wants to see untagged articles
+      const wantsUntagged = filters.tagIds.includes('NO_TAGS')
+      const hasNoTags = articleTagIds.length === 0
+      
+      // Filter out 'NO_TAGS' to get actual tag IDs
+      const actualTagIds = filters.tagIds.filter(id => id !== 'NO_TAGS')
+      const hasSelectedTag = actualTagIds.length > 0 && actualTagIds.some((tagId) => articleTagIds.includes(tagId))
+      
+      // Include article if: (it has no tags AND user wants untagged) OR (it has a selected tag)
+      const shouldInclude = (wantsUntagged && hasNoTags) || hasSelectedTag
+      if (!shouldInclude) return false
     }
 
     // Group filter

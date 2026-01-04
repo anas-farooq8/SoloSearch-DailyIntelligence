@@ -455,6 +455,21 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              {/* Untagged option */}
+              <DropdownMenuCheckboxItem
+                key="no-tags"
+                checked={filters.tagIds.includes('NO_TAGS')}
+                onCheckedChange={(checked) => {
+                  onFilterChange({
+                    tagIds: checked 
+                      ? [...filters.tagIds, 'NO_TAGS'] 
+                      : filters.tagIds.filter((id) => id !== 'NO_TAGS'),
+                  })
+                }}
+              >
+                <span className="inline-block w-3 h-3 rounded-full mr-2 border border-slate-300 bg-slate-100" />
+                Untagged
+              </DropdownMenuCheckboxItem>
               {tags.map((tag) => (
                 <DropdownMenuCheckboxItem
                   key={tag.id}
