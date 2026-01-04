@@ -45,9 +45,12 @@ export interface Note {
 
 export interface KPIStats {
   total_today: number
+  total_yesterday: number
   high_priority_today: number
+  high_priority_yesterday: number
   awaiting_review: number
   weekly_added: number
+  weekly_added_previous: number
 }
 
 export interface Filters {
