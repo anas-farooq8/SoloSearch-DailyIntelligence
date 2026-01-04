@@ -1,0 +1,477 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        208
+      ],
+      "id": "99a13e84-f240-454d-9bb5-d45579ded578",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "articles",
+        "limit": 20,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "queued"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        352,
+        208
+      ],
+      "id": "47a0507d-2e2c-425e-82a7-1cf1c5baa077",
+      "name": "Get many rows",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "3g87fYVWbGLbIKxi",
+          "name": "Solo-Search-Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI agent for Solo Search. \nAnalyze the following article using the defined rules and output your JSON.\n\nSource:\n{{ $json.source }}\n\nTitle:\n{{ $json.title }}\n\nCategories:\n{{ $json.categories }}\n\nContent:\n{{ $json.text }}\n\nTags:\n{{ $json.tags }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "={{ $('Aggregate Prompts').item.json.data.find(item => item.key === $json.source)?.value || \"AI\" }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        800,
+        224
+      ],
+      "id": "20412818-9dcf-4ee5-9579-98b4f73d0e34",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a659aec8-f189-421d-9ae6-5229afceb020",
+              "leftValue": "={{ $json.output.decision.toLowerCase() }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "1e04ab2f-57a7-4467-8534-c2cce19fa7b1",
+              "leftValue": "={{ $json.output.lead_score }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1152,
+        224
+      ],
+      "id": "ba132885-98e4-43ef-98fa-3a756d8194fc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        208
+      ],
+      "id": "fb32f504-5efa-4907-8864-8b57f71b429d",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "DVY0TLXG72wzYNTN",
+          "mode": "list",
+          "cachedResultName": "solo-search-kvs",
+          "cachedResultUrl": "/projects/i2VnwJm15qVCkX6j/datatables/DVY0TLXG72wzYNTN"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        208
+      ],
+      "id": "879908c5-5f48-4d91-9353-4665dc667257",
+      "name": "Get Prompts"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        128,
+        208
+      ],
+      "id": "11fa0666-7886-4581-8d39-9b2f5e7ac240",
+      "name": "Aggregate Prompts"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"decision\": \"\",\n  \"company\": \"\",\n  \"buyer\": \"\",\n  \"location\": {\n    \"region\": \"\",\n    \"country_code\": \"\"\n  },\n  \"sector\": [\"string\"],\n  \"amount\": \"\",\n  \"trigger_signal\": [\"string\"],\n  \"solution\": \"\",\n  \"lead_score\": 0,\n  \"why_this_matters\": \"\",\n  \"outreach_angle\": \"\",\n  \"additional_details\": \"\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1024,
+        432
+      ],
+      "id": "a6e6f13d-9ea1-4a88-8d15-2a6a8c96d5c6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        720,
+        432
+      ],
+      "id": "b4fd7ef0-875f-4f8d-9785-c6f626fff1cb",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "p4ZY7ZDiAHiOI05y",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "articles",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Loop Over Items').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "not_selected"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        416
+      ],
+      "id": "d2ea7264-50ab-4abf-bb09-aaaee77f7faa",
+      "name": "Not Selected",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "3g87fYVWbGLbIKxi",
+          "name": "Solo-Search-Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "articles",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Loop Over Items').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "processed"
+            },
+            {
+              "fieldId": "decision",
+              "fieldValue": "={{ $json.output.decision }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $json.output.company }}"
+            },
+            {
+              "fieldId": "buyer",
+              "fieldValue": "={{ $json.output.buyer }}"
+            },
+            {
+              "fieldId": "location_region",
+              "fieldValue": "={{ $json.output.location.region }}"
+            },
+            {
+              "fieldId": "sector",
+              "fieldValue": "={{ $json.output.sector }}"
+            },
+            {
+              "fieldId": "amount",
+              "fieldValue": "={{ $json.output.amount }}"
+            },
+            {
+              "fieldId": "trigger_signal",
+              "fieldValue": "={{ $json.output.trigger_signal }}"
+            },
+            {
+              "fieldId": "solution",
+              "fieldValue": "={{ $json.output.solution }}"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "={{ $json.output.lead_score }}"
+            },
+            {
+              "fieldId": "why_this_matters",
+              "fieldValue": "={{ $json.output.why_this_matters }}"
+            },
+            {
+              "fieldId": "location_country",
+              "fieldValue": "={{ $json.output.location.country_code }}"
+            },
+            {
+              "fieldId": "outreach_angle",
+              "fieldValue": "={{ $json.output.outreach_angle }}"
+            },
+            {
+              "fieldId": "additional_details",
+              "fieldValue": "={{ $json.output.additional_details }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        208
+      ],
+      "id": "f3a87e8c-c02c-4188-a3ac-456de3d13353",
+      "name": "Processed",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "3g87fYVWbGLbIKxi",
+          "name": "Solo-Search-Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 560,
+        "width": 2016,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        96
+      ],
+      "typeVersion": 1,
+      "id": "fb0dc1fe-ad60-4afb-9ce0-a9c8dc66fbb0",
+      "name": "Sticky Note"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Processed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Selected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Prompts": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Prompts": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Selected": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processed": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0cf1013c00750bfab7ca7f6a76bf0e8c2407d7a4a9a4e66c4888ec456837f043"
+  }
+}
