@@ -324,4 +324,4 @@ Proprietary software for Solo Search. All rights reserved.
 
 ---
 
-**Built with ❤️ for Solo Search** | *Last Updated: January 2026*
+**Built with ❤️ for [Solo Search](https://www.solosearch.co.uk/)** | *Last Updated: January 2026*
