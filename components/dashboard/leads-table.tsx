@@ -520,7 +520,9 @@ export function LeadsTable({
                     </div>
                   </TableCell>
                   <TableCell className="px-3">
-                    <p className="text-xs sm:text-sm text-slate-600">{article.amount || "-"}</p>
+                    <p className="text-xs sm:text-sm text-slate-600">
+                      {article.amount ? `£${Number(article.amount).toLocaleString('en-GB')}` : "-"}
+                    </p>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="px-3">
                     <a
@@ -751,7 +753,9 @@ export function LeadsTable({
                   {selectedArticle.amount && (
                     <div>
                       <h4 className="text-xs sm:text-sm font-semibold text-slate-600 mb-1 sm:mb-2">Amount</h4>
-                      <p className="text-sm sm:text-base text-slate-900 font-medium">{selectedArticle.amount}</p>
+                      <p className="text-sm sm:text-base text-slate-900 font-medium">
+                        £{Number(selectedArticle.amount).toLocaleString('en-GB')}
+                      </p>
                     </div>
                   )}
                   {selectedArticle.solution && (
