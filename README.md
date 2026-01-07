@@ -115,7 +115,7 @@ The application requires specific database tables and RLS policies. Run the SQL 
 - `notes` table for one-to-one article notes
 - Row Level Security (RLS) policies for authenticated users
 - Indexes for optimal query performance (GIN indexes for arrays, B-tree for common queries)
-- Triggers for automatic `updated_at` timestamp management
+- Triggers for automatic timestamp management (includes `processed_at`)
 
 **Schema Overview:**
 
@@ -124,7 +124,7 @@ The application requires specific database tables and RLS policies. Run the SQL 
 - AI fields: `lead_score` (0-10), `why_this_matters`, `outreach_angle`, `additional_details`
 - Classification: `sector[]` (array), `trigger_signal[]` (array), `solution`, `amount`
 - Location: `location_region`, `location_country`
-- Processing: `status` (must be 'processed' to show in dashboard), `decision`, `updated_at`
+- Processing: `status` (must be 'processed' to show in dashboard), `decision`, `processed_at`
 
 **tags** table:
 - `id` (uuid), `name` (unique), `color`, `is_default` (boolean)
@@ -298,7 +298,7 @@ SoloSearch-DailyIntelligence/
 **No articles showing:**
 - Ensure articles have `status = 'processed'`
 - Verify RLS policies are applied
-- Check `updated_at` is recent (KPIs use this field)
+- Check `processed_at` is recent (KPIs use this field)
 
 **Can't add/remove tags:**
 - Check authentication (browser console for 401 errors)

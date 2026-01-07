@@ -155,8 +155,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
 
   // Helper function to calculate all KPIs using local timezone
   const calculateKPIs = useCallback((articles: Article[]): KPIStats => {
-    const now = new Date()
-    
+    const getProcessedTime = (article: Article) => {
+      const timestamp = article.processed_at
+      return timestamp ? new Date(timestamp).getTime() : null
+    }
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const todayTime = today.getTime()
@@ -183,31 +186,40 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     previousWeekEnd.setMilliseconds(-1) // One millisecond before current week starts
     const previousWeekEndTime = previousWeekEnd.getTime()
     
-    const totalToday = articles.filter(article => new Date(article.updated_at).getTime() >= todayTime).length
+    const totalToday = articles.filter(article => {
+      const articleTime = getProcessedTime(article)
+      return articleTime !== null && articleTime >= todayTime
+    }).length
     const totalYesterday = articles.filter(article => {
-      const articleTime = new Date(article.updated_at).getTime()
-      return articleTime >= yesterdayTime && articleTime < todayTime
+      const articleTime = getProcessedTime(article)
+      return articleTime !== null && articleTime >= yesterdayTime && articleTime < todayTime
     }).length
     
     const highPriorityToday = articles.filter(article => 
-      article.lead_score >= 8 && new Date(article.updated_at).getTime() >= todayTime
+      article.lead_score >= 8 && (() => {
+        const articleTime = getProcessedTime(article)
+        return articleTime !== null && articleTime >= todayTime
+      })()
     ).length
     const highPriorityYesterday = articles.filter(article => {
-      const articleTime = new Date(article.updated_at).getTime()
-      return article.lead_score >= 8 && articleTime >= yesterdayTime && articleTime < todayTime
+      const articleTime = getProcessedTime(article)
+      return article.lead_score >= 8 && articleTime !== null && articleTime >= yesterdayTime && articleTime < todayTime
     }).length
     
     const awaitingReview = articles.filter(article => !article.tags || article.tags.length === 0).length
     
     // Current week: from Monday 00:00 to now
     const weeklyAdded = articles.filter(article => 
-      new Date(article.updated_at).getTime() >= currentWeekStartTime
+      (() => {
+        const articleTime = getProcessedTime(article)
+        return articleTime !== null && articleTime >= currentWeekStartTime
+      })()
     ).length
     
     // Previous week: from previous Monday 00:00 to previous Sunday 23:59:59.999
     const weeklyAddedPrevious = articles.filter(article => {
-      const articleTime = new Date(article.updated_at).getTime()
-      return articleTime >= previousWeekStartTime && articleTime <= previousWeekEndTime
+      const articleTime = getProcessedTime(article)
+      return articleTime !== null && articleTime >= previousWeekStartTime && articleTime <= previousWeekEndTime
     }).length
     
     return {

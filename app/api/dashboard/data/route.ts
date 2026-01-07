@@ -27,7 +27,7 @@ export async function GET() {
           url,
           date,
           title,
-          updated_at,
+          processed_at,
           company,
           buyer,
           sector,
@@ -56,7 +56,7 @@ export async function GET() {
         `
         )
         .eq("status", "processed")
-        .order("updated_at", { ascending: false }),
+        .order("processed_at", { ascending: false }),
 
       // Fetch all tags
       supabase.from("tags").select("*").order("name"),

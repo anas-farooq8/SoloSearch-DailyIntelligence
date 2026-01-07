@@ -57,7 +57,9 @@ export async function exportToExcel(articles: Article[], filters: Filters) {
       details: article.additional_details || "",
       source: article.source,
       url: article.url,
-      processed: article.updated_at ? new Date(article.updated_at).toLocaleString() : "",
+      processed: article.processed_at
+        ? new Date(article.processed_at).toLocaleString()
+        : "",
       date: article.date ? new Date(article.date).toLocaleDateString() : "",
       region: article.location_region || "",
       country: article.location_country || "",

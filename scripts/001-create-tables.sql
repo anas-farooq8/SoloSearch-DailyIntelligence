@@ -21,8 +21,11 @@ create table public.articles (
   trigger_signal text[] null,
   solution text null,
   lead_score numeric(3, 1) null default 0.0,
-  ai_summary text null,
+  why_this_matters text null,
   location_country text null,
+  outreach_angle text null,
+  additional_details text null,
+  processed_at timestamp with time zone null default now(),
   constraint articles_pkey primary key (id),
   constraint articles_url_key unique (url),
   constraint chk_articles_lead_score check (
@@ -33,16 +36,15 @@ create table public.articles (
   )
 ) TABLESPACE pg_default;
 
--- Indexes for articles table
 create index IF not exists idx_articles_source on public.articles using btree (source) TABLESPACE pg_default;
+create index IF not exists idx_articles_date on public.articles using btree (date) TABLESPACE pg_default;
 create index IF not exists idx_articles_url on public.articles using btree (url) TABLESPACE pg_default;
 create index IF not exists idx_articles_status on public.articles using btree (status) TABLESPACE pg_default;
 create index IF not exists idx_articles_decision on public.articles using btree (decision) TABLESPACE pg_default;
 create index IF not exists idx_articles_lead_score on public.articles using btree (lead_score desc) TABLESPACE pg_default;
 create index IF not exists idx_articles_sector_gin on public.articles using gin (sector) TABLESPACE pg_default;
 create index IF not exists idx_articles_trigger_signal_gin on public.articles using gin (trigger_signal) TABLESPACE pg_default;
-create index IF not exists idx_articles_location_country on public.articles using btree (location_country) TABLESPACE pg_default;
-create index IF not exists idx_articles_created_at on public.articles using btree (created_at desc) TABLESPACE pg_default;
+create index IF not exists idx_articles_processed_at on public.articles using btree (processed_at desc) TABLESPACE pg_default;
 
 create trigger trg_articles_set_updated_at BEFORE
 update on articles for EACH row

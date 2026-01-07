@@ -57,6 +57,8 @@ function getGroupName(groupId: string | null | undefined): string {
 
 type SortField = 'score' | 'date' | 'company' | 'group' | 'location'
 
+const getProcessedAt = (article: Article) => article.processed_at || null
+
 export function LeadsTable({
   articles,
   total,
@@ -113,12 +115,14 @@ export function LeadsTable({
         diff = (a.lead_score || 0) - (b.lead_score || 0)
         break
       case 'date':
-        aEmpty = !a.updated_at
-        bEmpty = !b.updated_at
+        const aProcessed = getProcessedAt(a)
+        const bProcessed = getProcessedAt(b)
+        aEmpty = !aProcessed
+        bEmpty = !bProcessed
         if (aEmpty && bEmpty) return 0
         if (aEmpty) return 1
         if (bEmpty) return -1
-        diff = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+        diff = new Date(aProcessed as string).getTime() - new Date(bProcessed as string).getTime()
         break
       case 'company':
         aEmpty = !a.company || a.company.trim() === ''
@@ -537,7 +541,7 @@ export function LeadsTable({
                   </TableCell>
                   <TableCell className="px-3">
                     <p className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(article.updated_at).toLocaleDateString()}
+                    {getProcessedAt(article) ? new Date(getProcessedAt(article) as string).toLocaleDateString() : "-"}
                     </p>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="px-3">
@@ -864,7 +868,9 @@ export function LeadsTable({
                   <div>
                     <h4 className="text-xs sm:text-sm font-semibold text-slate-600 mb-1 sm:mb-2">Processed Date</h4>
                     <p className="text-sm sm:text-base text-slate-900">
-                      {new Date(selectedArticle.updated_at).toLocaleString()}
+                      {getProcessedAt(selectedArticle)
+                        ? new Date(getProcessedAt(selectedArticle) as string).toLocaleString()
+                        : "—"}
                     </p>
                   </div>
                   {selectedArticle.date && (

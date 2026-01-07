@@ -4,8 +4,8 @@ export interface Article {
   group_name: string
   url: string
   date: string
+  processed_at: string | null
   title: string
-  updated_at: string
   company: string
   buyer: string
   sector: string[]
