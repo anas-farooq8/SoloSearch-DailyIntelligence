@@ -211,6 +211,10 @@
             {
               "fieldId": "status",
               "fieldValue": "not_selected"
+            },
+            {
+              "fieldId": "processed_at",
+              "fieldValue": "={{ $now }}"
             }
           ]
         }
@@ -301,6 +305,10 @@
             {
               "fieldId": "additional_details",
               "fieldValue": "={{ $json.output.additional_details }}"
+            },
+            {
+              "fieldId": "processed_at",
+              "fieldValue": "={{ $now }}"
             }
           ]
         }
