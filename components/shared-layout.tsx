@@ -39,11 +39,11 @@ export function SharedLayout({ children }: SharedLayoutProps) {
     <div className="min-h-screen bg-slate-50">
       <Sidebar onSignOut={handleSignOut} />
       <main 
-        className="transition-all duration-300" 
         style={{
           marginLeft: isDesktop
             ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
-            : '0'
+            : '0',
+          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {children}

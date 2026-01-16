@@ -184,6 +184,51 @@
   --mobile-menu-size: 3.5rem;
 }
 
+/* Sidebar animations - optimized for performance */
+.sidebar-animate {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+.sidebar-animate.transitioning {
+  will-change: width;
+}
+
+.sidebar-animate:not(.transitioning) {
+  will-change: auto;
+}
+
+/* Logo and text fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+.sidebar-text-enter {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sidebar-text-exit {
+  animation: fadeOut 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 /* Mobile menu spacing - only on mobile, reset on desktop */
 @media (max-width: 1023px) {
   .page-header-content {

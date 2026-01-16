@@ -9,14 +9,23 @@ export function useMediaQuery(query: string): boolean {
     // Set initial value
     setMatches(media.matches)
 
-    // Create listener
-    const listener = (e: MediaQueryListEvent) => setMatches(e.matches)
+    // Debounced listener for performance
+    let timeoutId: NodeJS.Timeout
+    const listener = (e: MediaQueryListEvent) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        setMatches(e.matches)
+      }, 50) // 50ms debounce
+    }
     
     // Add listener
     media.addEventListener('change', listener)
     
     // Cleanup
-    return () => media.removeEventListener('change', listener)
+    return () => {
+      clearTimeout(timeoutId)
+      media.removeEventListener('change', listener)
+    }
   }, [query])
 
   return matches
