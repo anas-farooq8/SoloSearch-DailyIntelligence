@@ -79,11 +79,14 @@ update on tags for EACH row
 execute FUNCTION set_updated_at ();
 
 -- Add Default Tags
-INSERT INTO "public"."tags" ("name", "color", "is_default") 
+INSERT INTO "public"."tags" ("name", "color", "is_default")
 VALUES
-    ('Not Relevant', '#6B7280', true),
+    ('Call Now', '#EF4444', true),
     ('Watch', '#EAB308', true),
-    ('Call Now', '#EF4444', true);
+    ('Not Relevant', '#6B7280', true),
+    ('To Be Actioned', '#EF4444', true),
+    ('For Info', '#A855F7', true),
+    ('Completed', '#0EA5E9', true);
 
 -- RLS Policies for tags
 alter table public.tags enable ROW level security;

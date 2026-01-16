@@ -11,15 +11,17 @@ export interface DateRange {
   to: Date
 }
 
-export type DateRangePreset = "24h" | "7d" | "14d" | "30d" | "3m" | "custom"
+export type DateRangePreset = "24h" | "7d" | "14d" | "30d" | "3m" | "6m" | "12m" | "custom"
 
 interface DateRangePickerProps {
   value: DateRange
   onChange: (range: DateRange) => void
   className?: string
+  minDate?: Date | null
+  maxDate?: Date
 }
 
-export function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+export function DateRangePicker({ value, onChange, className, minDate, maxDate }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activePreset, setActivePreset] = useState<DateRangePreset>("30d")
   const [customStart, setCustomStart] = useState("")
@@ -43,11 +45,16 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
     { id: "7d" as const, label: "7 days" },
     { id: "14d" as const, label: "14 days" },
     { id: "30d" as const, label: "30 days" },
-    { id: "3m" as const, label: "3 months" },
+  ]
+
+  const monthPresets = [
+    { id: "3m" as const, label: "3m" },
+    { id: "6m" as const, label: "6m" },
+    { id: "12m" as const, label: "12m" },
   ]
 
   const applyPreset = (preset: DateRangePreset) => {
-    const now = new Date()
+    const now = maxDate || new Date()
     let from: Date
 
     switch (preset) {
@@ -65,6 +72,12 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
         break
       case "3m":
         from = subMonths(now, 3)
+        break
+      case "6m":
+        from = subMonths(now, 6)
+        break
+      case "12m":
+        from = subMonths(now, 12)
         break
       default:
         return
@@ -90,6 +103,18 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
       return
     }
 
+    // Validate against min/max dates
+    if (minDate && from < startOfDay(minDate)) {
+      alert("Start date cannot be before the first article date")
+      return
+    }
+
+    const max = maxDate || new Date()
+    if (to > endOfDay(max)) {
+      alert("End date cannot be in the future")
+      return
+    }
+
     setActivePreset("custom")
     onChange({ from, to })
     setIsOpen(false)
@@ -100,7 +125,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
     if (activePreset === "custom") {
       return `${format(value.from, "MMM d, yyyy")} - ${format(value.to, "MMM d, yyyy")}`
     }
-    const preset = presets.find((p) => p.id === activePreset)
+    const preset = presets.find((p) => p.id === activePreset) || monthPresets.find((p) => p.id === activePreset)
     return preset?.label || "Select range"
   }
 
@@ -128,7 +153,7 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     key={preset.id}
                     onClick={() => applyPreset(preset.id)}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                      "w-full text-left px-3 py-2 rounded-md text-sm transition-colors cursor-pointer",
                       "hover:bg-slate-100",
                       activePreset === preset.id
                         ? "bg-blue-50 text-blue-600 font-medium"
@@ -138,16 +163,35 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     {preset.label}
                   </button>
                 ))}
+                {/* Month Presets - 3m, 6m, 12m */}
+                <div className="flex gap-2 pt-1 pb-1 border-t border-slate-100 mt-1">
+                  {monthPresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => applyPreset(preset.id)}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer",
+                        "hover:bg-slate-100",
+                        activePreset === preset.id
+                          ? "bg-blue-50 text-blue-600 border border-blue-200"
+                          : "text-slate-700 border border-slate-200"
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
                 <button
                   onClick={() => {
                     setShowCustomInputs(true)
-                    const today = format(new Date(), "yyyy-MM-dd")
-                    const lastMonth = format(subMonths(new Date(), 1), "yyyy-MM-dd")
-                    setCustomStart(lastMonth)
-                    setCustomEnd(today)
+                    const today = maxDate || new Date()
+                    const start = minDate || subMonths(today, 1)
+                    setCustomStart(format(start, "yyyy-MM-dd"))
+                    setCustomEnd(format(today, "yyyy-MM-dd"))
                   }}
                   className={cn(
-                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors cursor-pointer",
                     "hover:bg-slate-100",
                     activePreset === "custom"
                       ? "bg-blue-50 text-blue-600 font-medium"
@@ -168,7 +212,9 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     type="date"
                     value={customStart}
                     onChange={(e) => setCustomStart(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+                    min={minDate ? format(minDate, "yyyy-MM-dd") : undefined}
+                    max={maxDate ? format(maxDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm cursor-pointer"
                   />
                 </div>
                 <div>
@@ -177,7 +223,9 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     type="date"
                     value={customEnd}
                     onChange={(e) => setCustomEnd(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+                    min={minDate ? format(minDate, "yyyy-MM-dd") : undefined}
+                    max={maxDate ? format(maxDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm cursor-pointer"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
@@ -185,14 +233,14 @@ export function DateRangePicker({ value, onChange, className }: DateRangePickerP
                     variant="outline"
                     size="sm"
                     onClick={() => setShowCustomInputs(false)}
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                   >
                     Cancel
                   </Button>
                   <Button
                     size="sm"
                     onClick={applyCustomRange}
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                   >
                     Apply
                   </Button>

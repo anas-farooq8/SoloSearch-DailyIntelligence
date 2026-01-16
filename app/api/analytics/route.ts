@@ -28,7 +28,9 @@ export async function GET(request: Request) {
         article_tags (
           tag:tags (
             id,
-            name
+            name,
+            color,
+            is_default
           )
         )
       `
@@ -51,9 +53,19 @@ export async function GET(request: Request) {
       }
     })
 
+    // Get the earliest article date for date range picker restrictions
+    const earliestDate = articles && articles.length > 0
+      ? articles.reduce((earliest: string | null, article: any) => {
+          if (!article.processed_at) return earliest
+          if (!earliest) return article.processed_at
+          return article.processed_at < earliest ? article.processed_at : earliest
+        }, null as string | null)
+      : null
+
     // Return raw data - let client do the time-based calculations
     return NextResponse.json({
       articles: processedArticles,
+      earliestArticleDate: earliestDate,
     })
   } catch (error) {
     console.error("Error in analytics API:", error)

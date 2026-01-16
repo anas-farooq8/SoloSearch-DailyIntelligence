@@ -11,7 +11,12 @@ interface SharedLayoutProps {
 
 export function SharedLayout({ children }: SharedLayoutProps) {
   const supabase = createClient()
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  // Initialize state directly from localStorage to prevent flash
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const savedState = localStorage.getItem("sidebar-collapsed")
+    return savedState !== "false"
+  })
   const isDesktop = useIsDesktop()
 
   useEffect(() => {
@@ -20,7 +25,6 @@ export function SharedLayout({ children }: SharedLayoutProps) {
       setIsCollapsed(savedState !== "false")
     }
 
-    handleStorageChange()
     window.addEventListener("storage", handleStorageChange)
     window.addEventListener("sidebar-toggle", handleStorageChange)
 

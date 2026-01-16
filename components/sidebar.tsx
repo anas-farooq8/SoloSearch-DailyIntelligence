@@ -23,7 +23,16 @@ interface SidebarProps {
 
 export function Sidebar({ onSignOut }: SidebarProps) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  // Initialize state directly from localStorage to prevent flash
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const savedState = localStorage.getItem("sidebar-collapsed")
+    if (savedState === null) {
+      localStorage.setItem("sidebar-collapsed", "true")
+      return true
+    }
+    return savedState !== "false"
+  })
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
@@ -40,17 +49,6 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       label: "Analytics",
     },
   ], [])
-
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem("sidebar-collapsed")
-    const collapsed = savedState !== "false"
-    setIsCollapsed(collapsed)
-    
-    if (savedState === null) {
-      localStorage.setItem("sidebar-collapsed", "true")
-    }
-  }, [])
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {

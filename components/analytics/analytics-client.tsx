@@ -1,18 +1,18 @@
 "use client"
 
-import { useState, useMemo, useCallback, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import useSWR from "swr"
 import { Card } from "@/components/ui/card"
-import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker"
+import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,7 +21,8 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { subDays, format, startOfDay, endOfDay, eachDayOfInterval, isWithinInterval } from "date-fns"
-import { TrendingUp, TrendingDown, Award, CheckCircle, Clock } from "lucide-react"
+import { TrendingUp, CheckCircle, Sparkles, Target, BarChart3, Calendar } from "lucide-react"
+import { getGroupDisplayName, CHART_COLORS, UNTAGGED_TAG, CHART_STYLES } from "@/lib/constants"
 
 interface AnalyticsArticle {
   id: string
@@ -30,11 +31,12 @@ interface AnalyticsArticle {
   processed_at: string
   lead_score: number
   trigger_signal: string[]
-  tags: Array<{ id: string; name: string }>
+  tags: Array<{ id: string; name: string; color: string; is_default: boolean }>
 }
 
 interface AnalyticsData {
   articles: AnalyticsArticle[]
+  earliestArticleDate: string | null
 }
 
 const fetcher = async (url: string) => {
@@ -43,22 +45,32 @@ const fetcher = async (url: string) => {
   return res.json()
 }
 
-const COLORS = [
-  "#3b82f6", // blue
-  "#10b981", // green
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#8b5cf6", // purple
-  "#ec4899", // pink
-  "#06b6d4", // cyan
-  "#f97316", // orange
-]
+// Note: CHART_COLORS is now imported from @/lib/constants
+
+// Normalize source names for display
+const normalizeSourceName = (source: string): string => {
+  if (!source) return "Unknown"
+  
+  // Replace underscores with spaces and capitalize each word
+  return source
+    .replace(/_/g, " ")
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ")
+}
+
+// Note: getGroupDisplayName is now imported from @/lib/constants
 
 export function AnalyticsClient() {
+  const [mounted, setMounted] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfDay(subDays(new Date(), 30)),
     to: endOfDay(new Date()),
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const { data, isLoading } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
     revalidateOnFocus: false,
@@ -68,6 +80,9 @@ export function AnalyticsClient() {
   })
 
   // Filter articles by date range
+  // dateRange.from: Start of selected date (00:00:00.000)
+  // dateRange.to: End of selected date (23:59:59.999)
+  // isWithinInterval checks if articleDate >= start AND articleDate <= end
   const filteredArticles = useMemo(() => {
     if (!data?.articles) return []
     
@@ -78,23 +93,36 @@ export function AnalyticsClient() {
     })
   }, [data?.articles, dateRange])
 
-  // 1. Top-Level Snapshot
+  // 1. Top-Level Snapshot - Using dashboard's calculation approach
   const topLevelStats = useMemo(() => {
+    // Helper to get article timestamp
+    const getProcessedTime = (article: AnalyticsArticle) => {
+      const timestamp = article.processed_at
+      return timestamp ? new Date(timestamp).getTime() : null
+    }
+
+    // Calculate start of today (00:00:00) like dashboard does
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayTime = today.getTime()
+    
+    // Total within filtered date range
     const total = filteredArticles.length
+    
+    // High-Priority (score >= 7) within filtered date range
     const highPriority = filteredArticles.filter((a) => a.lead_score >= 7).length
+    
+    // "Actioned" = articles with "Completed" tag (marked as completed/done)
+    // These represent opportunities that have been fully acted upon and completed
     const actioned = filteredArticles.filter((a) => {
       const tags = a.tags || []
-      return tags.some((tag) => 
-        tag.name.toLowerCase() === "to be actioned" || 
-        tag.name.toLowerCase() === "for info"
-      )
+      return tags.some((tag) => tag.name.toLowerCase() === "completed")
     }).length
     
-    // New today
-    const todayStart = startOfDay(new Date())
+    // New today (from start of day 00:00:00 to now) - matching dashboard logic
     const newToday = filteredArticles.filter((a) => {
-      const articleDate = new Date(a.processed_at)
-      return articleDate >= todayStart
+      const articleTime = getProcessedTime(a)
+      return articleTime !== null && articleTime >= todayTime
     }).length
 
     return { total, highPriority, actioned, newToday }
@@ -105,8 +133,8 @@ export function AnalyticsClient() {
     const groups: Record<string, number> = {}
     
     filteredArticles.forEach((article) => {
-      const group = article.group_name || "Unknown"
-      groups[group] = (groups[group] || 0) + 1
+      const groupName = getGroupDisplayName(article.group_name || "")
+      groups[groupName] = (groups[groupName] || 0) + 1
     })
 
     return Object.entries(groups)
@@ -119,8 +147,8 @@ export function AnalyticsClient() {
     const sources: Record<string, number> = {}
     
     filteredArticles.forEach((article) => {
-      const source = article.source || "Unknown"
-      sources[source] = (sources[source] || 0) + 1
+      const sourceName = normalizeSourceName(article.source || "")
+      sources[sourceName] = (sources[sourceName] || 0) + 1
     })
 
     return Object.entries(sources)
@@ -129,7 +157,7 @@ export function AnalyticsClient() {
       .slice(0, 10) // Top 10 sources
   }, [filteredArticles])
 
-  // 4. Trigger/Signal Breakdown
+  // 4. Trigger/Signal Breakdown - Show TOP 8 triggers
   const triggerData = useMemo(() => {
     const triggers: Record<string, number> = {}
     
@@ -149,59 +177,89 @@ export function AnalyticsClient() {
         percentage: total > 0 ? Math.round((count / total) * 100) : 0,
       }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8) // Top 8 triggers
+      .slice(0, 8) // Show top 8 triggers
   }, [filteredArticles])
 
-  // 5. Scoring Distribution
+  // 5. Scoring Distribution - Updated buckets: 5-6, 7-8, 9, 10
   const scoreData = useMemo(() => {
     const buckets = {
-      "9-10": 0,
+      "10": 0,
+      "9": 0,
       "7-8": 0,
       "5-6": 0,
-      "3-4": 0,
-      "0-2": 0,
     }
 
     filteredArticles.forEach((article) => {
       const score = article.lead_score || 0
-      if (score >= 9) buckets["9-10"]++
-      else if (score >= 7) buckets["7-8"]++
-      else if (score >= 5) buckets["5-6"]++
-      else if (score >= 3) buckets["3-4"]++
-      else buckets["0-2"]++
+      if (score === 10) buckets["10"]++
+      else if (score === 9) buckets["9"]++
+      else if (score >= 7 && score < 9) buckets["7-8"]++
+      else if (score >= 5 && score < 7) buckets["5-6"]++
     })
 
-    return Object.entries(buckets).map(([range, count]) => ({ range, count }))
+    // Return in reverse order for display (10 at top)
+    return [
+      { range: "10", count: buckets["10"] },
+      { range: "9", count: buckets["9"] },
+      { range: "7-8", count: buckets["7-8"] },
+      { range: "5-6", count: buckets["5-6"] },
+    ]
   }, [filteredArticles])
 
-  // 6. Engagement/Action Tracking
+  // 6. Engagement/Action Tracking - Dynamic default tags from database
   const engagementData = useMemo(() => {
-    let toBeActioned = 0
-    let forInfo = 0
-    let notRelevant = 0
-    let untagged = 0
-
+    // Get all unique default tags from articles
+    const defaultTagsMap = new Map<string, { name: string; color: string; count: number }>()
+    
+    // Count articles for each default tag
     filteredArticles.forEach((article) => {
       const tags = article.tags || []
-      if (tags.length === 0) {
-        untagged++
-      } else {
-        const hasToBeActioned = tags.some((tag) => tag.name.toLowerCase() === "to be actioned")
-        const hasForInfo = tags.some((tag) => tag.name.toLowerCase() === "for info")
-        const hasNotRelevant = tags.some((tag) => tag.name.toLowerCase() === "not relevant")
-        
-        if (hasToBeActioned) toBeActioned++
-        if (hasForInfo) forInfo++
-        if (hasNotRelevant) notRelevant++
+      const defaultTags = tags.filter((tag) => tag.is_default)
+      
+      if (defaultTags.length > 0) {
+        // Count the first default tag found (articles should have only one default tag)
+        const tag = defaultTags[0]
+        const key = tag.name.toLowerCase()
+        if (defaultTagsMap.has(key)) {
+          defaultTagsMap.get(key)!.count++
+        } else {
+          defaultTagsMap.set(key, {
+            name: tag.name,
+            color: tag.color,
+            count: 1
+          })
+        }
       }
     })
-
-    return [
-      { name: "To be Actioned", value: toBeActioned, color: "#10b981" },
-      { name: "For Info", value: forInfo, color: "#3b82f6" },
-      { name: "Not Relevant", value: notRelevant, color: "#ef4444" },
-      { name: "Untagged", value: untagged, color: "#94a3b8" },
-    ]
+    
+    // Count untagged articles (no tags at all)
+    const untaggedCount = filteredArticles.filter((a) => !a.tags || a.tags.length === 0).length
+    
+    // Convert to array format and add untagged
+    const result = Array.from(defaultTagsMap.values()).map(tag => ({
+      name: tag.name,
+      value: tag.count,
+      color: tag.color
+    }))
+    
+    // Add untagged at the end (using shared constant)
+    if (untaggedCount > 0 || result.length === 0) {
+      result.push({
+        name: UNTAGGED_TAG.name,
+        value: untaggedCount,
+        color: UNTAGGED_TAG.color
+      })
+    }
+    
+    // Sort by value descending
+    const sorted = result.sort((a, b) => b.value - a.value)
+    
+    // Calculate total and add percentage
+    const total = sorted.reduce((sum, item) => sum + item.value, 0)
+    return sorted.map(item => ({
+      ...item,
+      percentage: total > 0 ? Math.round((item.value / total) * 100) : 0
+    }))
   }, [filteredArticles])
 
   // 7. Time Trend
@@ -232,223 +290,627 @@ export function AnalyticsClient() {
     return trend
   }, [filteredArticles, dateRange])
 
-  if (isLoading) {
+  // Skeleton Loading Component - matching dashboard style
+  if (isLoading || !mounted) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-64" />
+      <div className="min-h-screen bg-slate-50">
+        {/* Page Header - Show actual content, not skeleton */}
+        <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-header-content">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="h-7 w-7 text-blue-600" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
+              </div>
+              <p className="text-slate-600 text-sm sm:text-base">
+                Comprehensive insights and performance metrics
+              </p>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Skeleton className="h-10 w-full sm:w-64" />
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-96" />
+
+        <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-6">
+          {/* KPI Cards Skeleton - Show titles and icons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: "Total Opportunities", icon: TrendingUp, bg: "bg-blue-600" },
+              { title: "High-Priority", icon: Target, bg: "bg-amber-600" },
+              { title: "Actioned", icon: CheckCircle, bg: "bg-green-600" },
+              { title: "New Today", icon: Calendar, bg: "bg-purple-600" },
+            ].map((card, i) => (
+              <Card key={i} className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-slate-50 to-white">
+                <div className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                        {card.title}
+                      </p>
+                      <Skeleton className="h-10 w-20 mb-1" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <div className={`p-3 ${card.bg} rounded-xl shadow-lg`}>
+                      <card.icon className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Charts Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Opportunities by Group</h2>
+                    <p className="text-sm text-slate-500 mt-1">Distribution across source groups</p>
+                  </div>
+                </div>
+                <Skeleton className="h-80 w-full" />
+              </div>
+            </Card>
+            
+            <Card className="shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
+                    <p className="text-sm text-slate-500 mt-1">What's driving opportunities</p>
+                  </div>
+                  <span className="text-sm text-slate-600 font-semibold bg-slate-100 px-3 py-1 rounded-full">
+                    Top 8
+                  </span>
+                </div>
+                <Skeleton className="h-80 w-full" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Full Width Chart Skeleton */}
+          <Card className="shadow-sm">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Top Sources</h2>
+                  <p className="text-sm text-slate-500 mt-1">Most productive data sources</p>
+                </div>
+              </div>
+              <Skeleton className="h-96 w-full" />
+            </div>
+          </Card>
+
+          {/* Two Column Charts Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Score Distribution</h2>
+                    <p className="text-sm text-slate-500 mt-1">Quality check across scores</p>
+                  </div>
+                </div>
+                <Skeleton className="h-80 w-full" />
+              </div>
+            </Card>
+            
+            <Card className="shadow-sm">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Engagement Tracking</h2>
+                    <p className="text-sm text-slate-500 mt-1">Action status breakdown</p>
+                  </div>
+                </div>
+                <Skeleton className="h-80 w-full" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Time Trend Skeleton */}
+          <Card className="shadow-sm">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Opportunities Over Time</h2>
+                  <p className="text-sm text-slate-500 mt-1">Daily trend analysis</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    <span className="text-slate-600">Opportunities</span>
+                  </div>
+                </div>
+              </div>
+              <Skeleton className="h-80 w-full" />
+            </div>
+          </Card>
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       {/* Page Header */}
       <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
-        <div className="flex items-center justify-between gap-4 page-header-content">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics</h1>
-            <p className="text-slate-600 mt-1 text-sm sm:text-base">
-              Comprehensive insights into your opportunities
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-header-content">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <BarChart3 className="h-7 w-7 text-blue-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
+            </div>
+            <p className="text-slate-600 text-sm sm:text-base">
+              Comprehensive insights and performance metrics
             </p>
           </div>
-          <div className="flex-shrink-0">
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <DateRangePicker 
+              value={dateRange} 
+              onChange={setDateRange}
+              minDate={data?.earliestArticleDate ? new Date(data.earliestArticleDate) : null}
+              maxDate={new Date()}
+            />
           </div>
         </div>
       </div>
 
-      <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-6">
 
-        {/* 1. Top-Level Snapshot */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Total Opportunities</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {topLevelStats.total}
-              </p>
+        {/* 1. Top-Level Snapshot - KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-white border-blue-100">
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                    Total Opportunities
+                  </p>
+                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                    {topLevelStats.total.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <BarChart className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">High-Priority</p>
-              <p className="text-xs text-slate-500">(Score ≥ 7)</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1">
-                {topLevelStats.highPriority}
-              </p>
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-amber-50 to-white border-amber-100">
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                    High-Priority
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-bold text-slate-900">
+                      {topLevelStats.highPriority.toLocaleString()}
+                    </p>
+                    <span className="text-xs text-amber-600 font-medium bg-amber-100 px-2 py-1 rounded-full">
+                      Score ≥7
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {topLevelStats.total > 0 
+                      ? `${Math.round((topLevelStats.highPriority / topLevelStats.total) * 100)}% of total`
+                      : "No data"
+                    }
+                  </p>
+                </div>
+                <div className="p-3 bg-amber-600 rounded-xl shadow-lg">
+                  <Target className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <Award className="h-6 w-6 text-amber-600" />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">Actioned</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {topLevelStats.actioned}
-              </p>
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-green-50 to-white border-green-100">
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                    Actioned
+                  </p>
+                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                    {topLevelStats.actioned.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {topLevelStats.total > 0 
+                      ? `${Math.round((topLevelStats.actioned / topLevelStats.total) * 100)}% completion rate`
+                      : "No data"
+                    }
+                  </p>
+                </div>
+                <div className="p-3 bg-green-600 rounded-xl shadow-lg">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-slate-600 font-medium">New Today</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
-                {topLevelStats.newToday}
-              </p>
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-purple-50 to-white border-purple-100">
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                    New Today
+                  </p>
+                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                    {topLevelStats.newToday.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Fresh opportunities
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Clock className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
         {/* 2. Opportunities by Group & 4. Trigger Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Opportunities by Group
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={groupData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="name" type="category" width={120} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Opportunities by Group</h2>
+                  <p className="text-sm text-slate-500 mt-1">Distribution across source groups</p>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={groupData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="groupGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#60a5fa" stopOpacity={1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis type="number" stroke="#64748b" style={{ fontSize: '12px' }} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={180} 
+                    stroke="#64748b"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="url(#groupGradient)" 
+                    radius={[0, 8, 8, 0]}
+                    animationDuration={600}
+                    animationBegin={0}
+                    isAnimationActive={true}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
 
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Trigger/Signal Breakdown
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={triggerData}
-                dataKey="count"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={(entry: any) => `${entry.name}: ${entry.percentage}%`}
-              >
-                {triggerData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
+                  <p className="text-sm text-slate-500 mt-1">What's driving opportunities</p>
+                </div>
+                <span className="text-sm text-slate-600 font-semibold bg-slate-100 px-3 py-1 rounded-full">
+                  Top 8
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <defs>
+                    {triggerData.map((_, index) => (
+                      <linearGradient key={`grad-${index}`} id={`triggerGrad${index}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={1} />
+                        <stop offset="100%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={0.7} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <Pie
+                    data={triggerData}
+                    dataKey="count"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    animationDuration={600}
+                    animationBegin={0}
+                    isAnimationActive={true}
+                    label={(entry: any) => entry.percentage > 2 ? `${entry.percentage}%` : ''}
+                    labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
+                  >
+                    {triggerData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={`url(#triggerGrad${index})`}
+                        stroke="white"
+                        strokeWidth={2}
+                        style={{
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                          transition: 'all 0.3s ease',
+                        }}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    wrapperStyle={{ fontSize: '13px', fontWeight: '500' }}
+                    iconSize={10}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
 
-        {/* 3. Opportunities by Source */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
-          Top Sources
-        </h2>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={sourceData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="opportunities" fill="#10b981" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+        {/* 3. Opportunities by Source - Enhanced Table */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Top Sources</h2>
+                <p className="text-sm text-slate-500 mt-1">Most productive data sources</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              {sourceData.map((source, index) => {
+                const maxValue = sourceData[0]?.opportunities || 1
+                const percentage = (source.opportunities / maxValue) * 100
+                
+                return (
+                  <div key={source.name} className="group">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 text-green-700 text-xs font-bold">
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-900">{source.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-slate-900">{source.opportunities}</span>
+                      </div>
+                    </div>
+                    <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-700 ease-out"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </Card>
 
         {/* 5. Scoring Distribution & 6. Engagement Tracking */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Score Distribution
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={scoreData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="range" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Score Distribution</h2>
+                  <p className="text-sm text-slate-500 mt-1">Quality check across scores</p>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={scoreData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.8} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="range" 
+                    stroke="#64748b" 
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                    cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
+                  />
+                  <Bar 
+                    dataKey="count" 
+                    fill="url(#scoreGradient)" 
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={600}
+                    animationBegin={0}
+                    isAnimationActive={true}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
 
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Engagement Tracking
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={engagementData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={(entry: any) => `${entry.name}: ${entry.value}`}
-              >
-                {engagementData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+          <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Engagement Tracking</h2>
+                  <p className="text-sm text-slate-500 mt-1">Action status breakdown</p>
+                </div>
+              </div>
+              
+              {/* Donut chart with vertical legend - Centered Layout */}
+              <div className="flex items-center justify-between px-6 gap-8">
+                {/* Donut Chart - Centered with proper padding for labels */}
+                <div className="flex-shrink-0 mx-auto" style={{ width: '340px', height: '300px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      <defs>
+                        {engagementData.map((_, index) => (
+                          <linearGradient key={`engGrad${index}`} id={`engGrad${index}`} x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={engagementData[index].color} stopOpacity={1} />
+                            <stop offset="100%" stopColor={engagementData[index].color} stopOpacity={0.7} />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <Pie
+                        data={engagementData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        animationDuration={600}
+                        animationBegin={0}
+                        isAnimationActive={true}
+                        label={(entry: any) => entry.percentage >= 3 ? `${entry.percentage}%` : ''}
+                        labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
+                        style={{ fontSize: '13px', fontWeight: '600', fill: '#1e293b' }}
+                      >
+                        {engagementData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={`url(#engGrad${index})`}
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={CHART_STYLES.tooltip}
+                        formatter={(value: any, name: any, props: any) => [
+                          `${value} (${props.payload.percentage}%)`,
+                          name
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Legend - Right Side Vertical */}
+                <div className="space-y-1 w-[240px]">
+                  {engagementData.map((item, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between py-1.5 px-3 rounded-md hover:bg-slate-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div 
+                          className="w-3 h-3 rounded-full flex-shrink-0 group-hover:scale-125 transition-transform"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                      </div>
+                      <span 
+                        className="text-lg font-bold group-hover:scale-110 transition-transform ml-6 flex-shrink-0"
+                        style={{ color: item.color }}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
 
-        {/* 7. Time Trend */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Opportunities Over Time
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={timeTrendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="opportunities"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: "#3b82f6", r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* 7. Time Trend - Area Chart with Gradient */}
+        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Opportunities Over Time</h2>
+                <p className="text-sm text-slate-500 mt-1">Daily trend analysis</p>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-slate-600">Opportunities</span>
+                </div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={timeTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorOpportunities" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#64748b" 
+                  style={{ fontSize: '11px' }}
+                  tick={{ fill: '#64748b' }}
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  style={{ fontSize: '12px' }}
+                  tick={{ fill: '#64748b' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="opportunities"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  fill="url(#colorOpportunities)"
+                  animationDuration={800}
+                  animationBegin={0}
+                  isAnimationActive={true}
+                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4, stroke: "white" }}
+                  activeDot={{ r: 6, strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       </main>
     </div>

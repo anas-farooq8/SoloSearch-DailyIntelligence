@@ -12,6 +12,7 @@ import {
 import { Search, X, ChevronDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Filters, Tag } from "@/types/database"
+import { UNTAGGED_TAG } from "@/lib/constants"
 
 interface FiltersBarProps {
   filters: Filters
@@ -545,7 +546,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags, loadi
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {/* Untagged option */}
+              {/* Untagged option (from constants) */}
               <DropdownMenuCheckboxItem
                 key="no-tags"
                 checked={filters.tagIds.includes('NO_TAGS')}
@@ -557,8 +558,11 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags, loadi
                   })
                 }}
               >
-                <span className="inline-block w-3 h-3 rounded-full mr-2 border border-slate-300 bg-slate-100" />
-                Untagged
+                <span 
+                  className="inline-block w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: UNTAGGED_TAG.color }}
+                />
+                {UNTAGGED_TAG.name}
               </DropdownMenuCheckboxItem>
               {tags.map((tag) => (
                 <DropdownMenuCheckboxItem

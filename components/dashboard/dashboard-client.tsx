@@ -10,7 +10,7 @@ import { LeadsTable } from "./leads-table"
 import { TagsManager } from "./tags-manager"
 import { HowItWorksGuide } from "./how-it-works-guide"
 import { Button } from "@/components/ui/button"
-import { Tags, HelpCircle } from "lucide-react"
+import { Tags, HelpCircle, LayoutDashboard } from "lucide-react"
 
 interface DashboardClientProps {
   userId: string
@@ -536,8 +536,11 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
         <div className="flex items-center justify-between gap-4 page-header-content">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
-            <p className="text-slate-600 mt-1 text-sm sm:text-base">Daily Intelligence Opportunities</p>
+            <div className="flex items-center gap-2 mb-1">
+              <LayoutDashboard className="h-7 w-7 text-blue-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+            </div>
+            <p className="text-slate-600 text-sm sm:text-base">Daily Intelligence Opportunities</p>
           </div>
           <div className="flex items-center gap-2">
             <Button

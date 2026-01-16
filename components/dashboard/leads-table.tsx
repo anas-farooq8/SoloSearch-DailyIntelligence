@@ -44,15 +44,12 @@ function getScoreBand(score: number) {
 }
 
 // Group mapping: maps group IDs to group names
-const GROUP_MAPPING: Record<string, string> = {
-  "1": "NHS Contracts",
-  "2": "Startup Funding & Grants",
-  "3": "HealthTech Media Coverage",
-}
+import { getGroupDisplayName as getGroupDisplayNameShared } from "@/lib/constants"
 
 function getGroupName(groupId: string | null | undefined): string {
   if (!groupId) return "-"
-  return GROUP_MAPPING[groupId] || groupId
+  const displayName = getGroupDisplayNameShared(groupId)
+  return displayName === "Unknown" ? groupId : displayName
 }
 
 type SortField = 'score' | 'date' | 'company' | 'group' | 'location' | 'source'
