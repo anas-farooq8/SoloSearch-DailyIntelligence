@@ -270,7 +270,7 @@ export function AnalyticsClient() {
     const spansMultipleYears = startYear !== endYear
     
     // Use appropriate date format (yy for 2-digit year)
-    const dateFormat = spansMultipleYears ? "MMM d, ''yy" : "MMM d"
+    const dateFormat = spansMultipleYears ? "MMM d, yy" : "MMM d"
     
     const trend = days.map((day) => {
       const dayStart = startOfDay(day)
@@ -660,7 +660,7 @@ export function AnalyticsClient() {
               </div>
               
               <ResponsiveContainer width="100%" height={340}>
-                  <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <PieChart margin={{ top: 10, right: 10, bottom: 20, left: 10 }}>
                     <defs>
                       {triggerData.map((_, index) => (
                         <linearGradient key={`grad-${index}`} id={`triggerGrad${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -683,7 +683,7 @@ export function AnalyticsClient() {
                       isAnimationActive={true}
                       label={(entry: any) => `${entry.percentage}%`}
                       labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-                      style={{ fontSize: '12px', fontWeight: '600', fill: '#1e293b' }}
+                      style={{ fontSize: '11px', fontWeight: '600', fill: '#1e293b' }}
                     >
                       {triggerData.map((entry, index) => (
                         <Cell 
@@ -896,11 +896,11 @@ export function AnalyticsClient() {
               </div>
               
               {/* Donut chart with legend - Responsive Layout */}
-              <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8 lg:px-6">
+              <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-6 xl:gap-8 overflow-hidden">
                 {/* Donut Chart - Responsive sizing */}
-                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ width: '100%', maxWidth: '340px', minWidth: '280px' }}>
-                  <ResponsiveContainer width="100%" height={340}>
-                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <div className="flex-shrink-0 w-full sm:w-auto lg:ml-8 xl:ml-12">
+                  <ResponsiveContainer width="100%" height={isDesktop ? 320 : 300} minWidth={isDesktop ? 300 : 300}>
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <defs>
                         {engagementData.map((_, index) => (
                           <linearGradient key={`engGrad${index}`} id={`engGrad${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -915,15 +915,15 @@ export function AnalyticsClient() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={isDesktop ? 90 : 65}
-                        outerRadius={isDesktop ? 140 : 100}
+                        innerRadius={isDesktop ? 65 : 65}
+                        outerRadius={isDesktop ? 110 : 100}
                         paddingAngle={2}
                         animationDuration={600}
                         animationBegin={0}
                         isAnimationActive={true}
                         label={(entry: any) => `${entry.percentage}%`}
-                        labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-                        style={{ fontSize: '12px', fontWeight: '600', fill: '#1e293b' }}
+                        labelLine={{ stroke: '#64748b', strokeWidth: 1.5 }}
+                        style={{ fontSize: '13px', fontWeight: '700', fill: '#1e293b' }}
                       >
                         {engagementData.map((entry, index) => (
                           <Cell 
@@ -965,13 +965,13 @@ export function AnalyticsClient() {
                 </div>
                 
                 {/* Desktop Legend - Always visible, stacks side-by-side on desktop */}
-                <div className="hidden lg:block space-y-0.5 w-[240px]">
+                <div className="hidden lg:flex lg:flex-col space-y-0.5 min-w-0 w-full max-w-[200px] xl:max-w-[220px] lg:mr-8 xl:mr-12">
                   {engagementData.map((item, index) => (
                     <div 
                       key={index}
-                      className="flex items-center justify-between py-1 px-3 rounded-md hover:bg-slate-50 transition-colors group"
+                      className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-slate-50 transition-colors group min-w-0"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
                         <div 
                           className="w-3 h-3 rounded-full flex-shrink-0 group-hover:scale-125 transition-transform"
                           style={{ backgroundColor: item.color }}
@@ -979,7 +979,7 @@ export function AnalyticsClient() {
                         <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
                       </div>
                       <span 
-                        className="text-lg font-bold group-hover:scale-110 transition-transform ml-6 flex-shrink-0"
+                        className="text-base font-bold group-hover:scale-110 transition-transform flex-shrink-0 tabular-nums"
                         style={{ color: item.color }}
                       >
                         {item.value}
