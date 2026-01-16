@@ -4,12 +4,13 @@ import { useState, useCallback, useMemo, useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import type { Article, Tag, KPIStats, Filters } from "@/types/database"
-import { DashboardHeader } from "./dashboard-header"
 import { KPICards } from "./kpi-cards"
 import { FiltersBar } from "./filters-bar"
 import { LeadsTable } from "./leads-table"
 import { TagsManager } from "./tags-manager"
 import { HowItWorksGuide } from "./how-it-works-guide"
+import { Button } from "@/components/ui/button"
+import { Tags, HelpCircle } from "lucide-react"
 
 interface DashboardClientProps {
   userId: string
@@ -24,6 +25,7 @@ interface DashboardData {
     triggers: string[]
     sources: string[]
     groups: string[]
+    countries: string[]
   }
 }
 
@@ -111,6 +113,11 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
       if (!article.group_name || !filters.groups.includes(article.group_name)) return false
     }
 
+    // Countries filter
+    if (filters.countries && filters.countries.length > 0) {
+      if (!article.location_country || !filters.countries.includes(article.location_country)) return false
+    }
+
     return true
   })
 }
@@ -138,6 +145,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     sources: [],
     tagIds: [],
     groups: [],
+    countries: [],
   })
   const [showTagsManager, setShowTagsManager] = useState(false)
   const [showHowItWorks, setShowHowItWorks] = useState(false)
@@ -520,49 +528,68 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     }
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = "/login"
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardHeader 
-        onSignOut={handleSignOut} 
-        onManageTags={() => setShowTagsManager(true)}
-        onShowGuide={() => setShowHowItWorks(true)}
-      />
+      {/* Page Header */}
+      <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-600 mt-1 text-sm sm:text-base">Daily Intelligence Opportunities</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHowItWorks(true)}
+              className="h-8 sm:h-9"
+            >
+              <HelpCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">How It Works</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTagsManager(true)}
+              className="h-8 sm:h-9"
+            >
+              <Tags className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Manage Tags</span>
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <KPICards kpis={kpis} loading={isLoading} />
+
+      <KPICards kpis={kpis} loading={isLoading} />
 
         <FiltersBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], sources: [], groups: [] }}
+          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], sources: [], groups: [], countries: [] }}
           tags={dashboardData?.tags || []}
           loading={isLoading}
         />
 
-        <LeadsTable
-          articles={paginatedArticles}
-          total={filteredArticles.length}
-          page={page}
-          onPageChange={setPage}
-          loading={isLoading}
-          tags={dashboardData?.tags || []}
-          onTagUpdate={handleTagUpdate}
-          filters={filters}
-          userId={userId}
-          addingTagId={addingTagId}
-          removingTagId={removingTagId}
-          onNoteUpdate={handleNoteUpdate}
-          activeView={activeView}
-          onViewChange={handleViewChange}
-          activeCount={activeArticles.length}
-          hiddenCount={hiddenArticles.length}
-        />
-      </main>
+      <LeadsTable
+        articles={paginatedArticles}
+        total={filteredArticles.length}
+        page={page}
+        onPageChange={setPage}
+        loading={isLoading}
+        tags={dashboardData?.tags || []}
+        onTagUpdate={handleTagUpdate}
+        filters={filters}
+        userId={userId}
+        addingTagId={addingTagId}
+        removingTagId={removingTagId}
+        onNoteUpdate={handleNoteUpdate}
+        activeView={activeView}
+        onViewChange={handleViewChange}
+        activeCount={activeArticles.length}
+        hiddenCount={hiddenArticles.length}
+      />
 
       {showTagsManager && (
         <TagsManager
@@ -576,6 +603,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         open={showHowItWorks} 
         onOpenChange={setShowHowItWorks} 
       />
+      </main>
     </div>
   )
 }

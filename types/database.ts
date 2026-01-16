@@ -63,4 +63,5 @@ export interface Filters {
   sources: string[]
   tagIds: string[]
   groups: string[]
+  countries: string[]
 }

@@ -91,6 +91,7 @@ export async function GET() {
       .sort()
     const sources = [...new Set(articles.map((a) => a.source).filter(Boolean))].sort()
     const groups = [...new Set(articles.map((a) => a.group_name).filter(Boolean))].sort()
+    const countries = [...new Set(articles.map((a) => a.location_country).filter(Boolean))].sort()
 
     // KPIs will be calculated on client-side to use user's local timezone
     // Just return basic awaiting_review count here
@@ -115,6 +116,7 @@ export async function GET() {
         triggers,
         sources,
         groups,
+        countries,
       },
     })
   } catch (error) {

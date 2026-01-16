@@ -32,8 +32,14 @@ export async function middleware(request: NextRequest) {
       data: { session },
     } = await supabase.auth.getSession()
 
-    // If no session exists, redirect to login (except for login/auth pages)
-    if (!session && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
+    // Protected routes that require authentication
+    const protectedRoutes = ["/dashboard", "/analytics"]
+    const isProtectedRoute = protectedRoutes.some(route => 
+      request.nextUrl.pathname.startsWith(route)
+    )
+    
+    // If no session exists and trying to access protected route, redirect to login
+    if (!session && isProtectedRoute) {
       // Clear any stale auth cookies
       const allCookies = request.cookies.getAll()
       allCookies.forEach((cookie) => {
@@ -42,6 +48,13 @@ export async function middleware(request: NextRequest) {
         }
       })
       
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      return NextResponse.redirect(url)
+    }
+
+    // If no session and not on login/auth page, redirect to login
+    if (!session && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/auth")) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       return NextResponse.redirect(url)

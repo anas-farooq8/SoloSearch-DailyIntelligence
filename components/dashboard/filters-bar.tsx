@@ -21,6 +21,7 @@ interface FiltersBarProps {
     triggers: string[]
     sources: string[]
     groups: string[]
+    countries: string[]
   }
   tags: Tag[]
   loading?: boolean
@@ -41,6 +42,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags, loadi
       sectorGroup: 'all',
       sectors: [],
       triggers: [],
+      countries: [],
       sources: [],
       tagIds: [],
       groups: [],
@@ -481,6 +483,49 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags, loadi
                 }}
               >
                 {source}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Countries Multi-select - Only on Web */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`w-full justify-between cursor-pointer h-10 text-sm hidden md:flex ${
+                  filters.countries.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                }`}
+              >
+                <span className="truncate">
+                  {filters.countries.length === 0 ? 'Countries' : `Countries (${filters.countries.length})`}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
+            <DropdownMenuCheckboxItem
+              key="all-countries"
+              checked={filters.countries.length === 0}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  onFilterChange({ countries: [] })
+                }
+              }}
+            >
+              All Countries
+            </DropdownMenuCheckboxItem>
+            {filterOptions.countries.map((country) => (
+              <DropdownMenuCheckboxItem
+                key={country}
+                checked={filters.countries.includes(country)}
+                onCheckedChange={(checked) => {
+                  onFilterChange({
+                    countries: checked ? [...filters.countries, country] : filters.countries.filter((c) => c !== country),
+                  })
+                }}
+              >
+                {country}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>

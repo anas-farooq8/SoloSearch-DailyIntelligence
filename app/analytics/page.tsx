@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { AnalyticsClient } from "@/components/analytics/analytics-client"
 import { SharedLayout } from "@/components/shared-layout"
 
-export default async function DashboardPage() {
+export default async function AnalyticsPage() {
   const supabase = await createClient()
 
   const {
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
 
   return (
     <SharedLayout>
-      <DashboardClient userId={user.id} />
+      <AnalyticsClient />
     </SharedLayout>
   )
 }
