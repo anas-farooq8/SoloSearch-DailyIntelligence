@@ -66,6 +66,7 @@ export function AnalyticsClient() {
     from: startOfDay(subDays(new Date(), 30)),
     to: endOfDay(new Date()),
   })
+  const [showAllSources, setShowAllSources] = useState(false)
 
   const { data, isLoading } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
     revalidateOnFocus: false,
@@ -296,10 +297,10 @@ export function AnalyticsClient() {
           <div className="flex items-center justify-between gap-4 page-header-content">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="h-7 w-7 text-blue-600" />
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
+                <BarChart3 className="hidden sm:flex h-7 w-7 text-blue-600" />
+                <h1 className="text-lg sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
               </div>
-              <p className="text-slate-600 text-sm sm:text-base">
+              <p className="text-slate-600 text-xs sm:text-base">
                 Comprehensive insights and performance metrics
               </p>
             </div>
@@ -311,25 +312,25 @@ export function AnalyticsClient() {
 
         <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {/* KPI Cards Skeleton - Show titles and icons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             {[
-              { title: "Total Opportunities", icon: TrendingUp, bg: "bg-blue-600" },
-              { title: "High-Priority", icon: Target, bg: "bg-amber-600" },
+              { title: "Total", icon: TrendingUp, bg: "bg-blue-600" },
+              { title: "High Priority", icon: Target, bg: "bg-amber-600" },
               { title: "Actioned", icon: CheckCircle, bg: "bg-green-600" },
               { title: "New Today", icon: Calendar, bg: "bg-purple-600" },
             ].map((card, i) => (
               <Card key={i} className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-slate-50 to-white">
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+                <div className="p-2.5 sm:p-4 md:p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 font-semibold uppercase tracking-wide mb-1 sm:mb-2 truncate">
                         {card.title}
                       </p>
-                      <Skeleton className="h-10 w-20 mb-1" />
-                      <Skeleton className="h-3 w-32" />
+                      <Skeleton className="h-6 sm:h-8 md:h-10 w-12 sm:w-16 md:w-20 mb-0.5 sm:mb-1" />
+                      <Skeleton className="h-2.5 sm:h-3 md:h-3.5 w-20 sm:w-24 md:w-32" />
                     </div>
-                    <div className={`p-3 ${card.bg} rounded-xl shadow-lg`}>
-                      <card.icon className="h-6 w-6 text-white" />
+                    <div className={`p-1.5 sm:p-2 md:p-3 ${card.bg} rounded-lg sm:rounded-xl shadow-lg flex-shrink-0`}>
+                      <card.icon className="h-3.5 w-3.5 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                     </div>
                   </div>
                 </div>
@@ -375,6 +376,7 @@ export function AnalyticsClient() {
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">Top Sources</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1">Most productive data sources</p>
                 </div>
+                <Skeleton className="h-6 w-20" />
               </div>
               <Skeleton className="h-80 sm:h-96 w-full" />
             </div>
@@ -437,10 +439,10 @@ export function AnalyticsClient() {
         <div className="flex items-center justify-between gap-4 page-header-content">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="h-7 w-7 text-blue-600" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
+              <BarChart3 className="hidden sm:flex h-7 w-7 text-blue-600" />
+              <h1 className="text-lg sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
             </div>
-            <p className="text-slate-600 text-sm sm:text-base">
+            <p className="text-slate-600 text-xs sm:text-base">
               Comprehensive insights and performance metrics
             </p>
           </div>
@@ -458,98 +460,98 @@ export function AnalyticsClient() {
       <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* 1. Top-Level Snapshot - KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-white border-blue-100">
-            <div className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
-                    Total Opportunities
+            <div className="p-2.5 sm:p-4 md:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 font-semibold uppercase tracking-wide mb-1 sm:mb-2 truncate">
+                    Total
                   </p>
-                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-0.5 sm:mb-1">
                     {topLevelStats.total.toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 truncate">
                     {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
-                  <TrendingUp className="h-6 w-6 text-white" />
+                <div className="p-1.5 sm:p-2 md:p-3 bg-blue-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <TrendingUp className="h-3.5 w-3.5 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                 </div>
               </div>
             </div>
           </Card>
 
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-amber-50 to-white border-amber-100">
-            <div className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
-                    High-Priority
+            <div className="p-2.5 sm:p-4 md:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 font-semibold uppercase tracking-wide mb-1 sm:mb-2 truncate">
+                    High Priority
                   </p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-4xl font-bold text-slate-900">
+                  <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900">
                       {topLevelStats.highPriority.toLocaleString()}
                     </p>
-                    <span className="text-xs text-amber-600 font-medium bg-amber-100 px-2 py-1 rounded-full">
-                      Score ≥7
+                    <span className="text-[8px] sm:text-[9px] md:text-xs text-amber-600 font-medium bg-amber-100 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                      ≥ 7
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 mt-0.5 sm:mt-1 truncate">
                     {topLevelStats.total > 0 
                       ? `${Math.round((topLevelStats.highPriority / topLevelStats.total) * 100)}% of total`
                       : "No data"
                     }
                   </p>
                 </div>
-                <div className="p-3 bg-amber-600 rounded-xl shadow-lg">
-                  <Target className="h-6 w-6 text-white" />
+                <div className="p-1.5 sm:p-2 md:p-3 bg-amber-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <Target className="h-3.5 w-3.5 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                 </div>
               </div>
             </div>
           </Card>
 
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-green-50 to-white border-green-100">
-            <div className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+            <div className="p-2.5 sm:p-4 md:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 font-semibold uppercase tracking-wide mb-1 sm:mb-2 truncate">
                     Actioned
                   </p>
-                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-0.5 sm:mb-1">
                     {topLevelStats.actioned.toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 truncate">
                     {topLevelStats.total > 0 
-                      ? `${Math.round((topLevelStats.actioned / topLevelStats.total) * 100)}% completion rate`
+                      ? `${Math.round((topLevelStats.actioned / topLevelStats.total) * 100)}% complete`
                       : "No data"
                     }
                   </p>
                 </div>
-                <div className="p-3 bg-green-600 rounded-xl shadow-lg">
-                  <CheckCircle className="h-6 w-6 text-white" />
+                <div className="p-1.5 sm:p-2 md:p-3 bg-green-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <CheckCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                 </div>
               </div>
             </div>
           </Card>
 
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-purple-50 to-white border-purple-100">
-            <div className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide mb-2">
+            <div className="p-2.5 sm:p-4 md:p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-600 font-semibold uppercase tracking-wide mb-1 sm:mb-2 truncate">
                     New Today
                   </p>
-                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-0.5 sm:mb-1">
                     {topLevelStats.newToday.toLocaleString()}
                   </p>
-                  <p className="text-xs text-slate-500 flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    Fresh opportunities
+                  <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 flex items-center gap-0.5 sm:gap-1 truncate">
+                    <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
+                    Fresh
                   </p>
                 </div>
-                <div className="p-3 bg-purple-600 rounded-xl shadow-lg">
-                  <Calendar className="h-6 w-6 text-white" />
+                <div className="p-1.5 sm:p-2 md:p-3 bg-purple-600 rounded-lg sm:rounded-xl shadow-lg flex-shrink-0">
+                  <Calendar className="h-3.5 w-3.5 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                 </div>
               </div>
             </div>
@@ -588,7 +590,21 @@ export function AnalyticsClient() {
                       backgroundColor: 'white', 
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    itemStyle={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      padding: '2px 0',
+                      color: '#1e293b'
+                    }}
+                    labelStyle={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#0f172a',
+                      marginBottom: '4px'
                     }}
                   />
                   <Bar 
@@ -611,65 +627,120 @@ export function AnalyticsClient() {
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1">What's driving opportunities</p>
                 </div>
-                <span className="text-xs sm:text-sm text-slate-600 font-semibold bg-slate-100 px-2 sm:px-3 py-1 rounded-full">
+                {/* Mobile dropdown button */}
+                <button
+                  onClick={() => {
+                    const legendDiv = document.getElementById('trigger-legend-mobile')
+                    if (legendDiv) {
+                      legendDiv.style.display = legendDiv.style.display === 'none' ? 'block' : 'none'
+                    }
+                  }}
+                  className="lg:hidden text-xs sm:text-sm text-slate-600 font-semibold bg-slate-100 px-2 sm:px-3 py-1 rounded-full hover:bg-slate-200 active:bg-slate-200 transition-colors cursor-pointer"
+                >
+                  Top 8 ▼
+                </button>
+                {/* Desktop badge */}
+                <span className="hidden lg:inline-block text-sm text-slate-600 font-semibold bg-slate-100 px-3 py-1 rounded-full">
                   Top 8
                 </span>
               </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <defs>
-                    {triggerData.map((_, index) => (
-                      <linearGradient key={`grad-${index}`} id={`triggerGrad${index}`} x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={1} />
-                        <stop offset="100%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={0.7} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  <Pie
-                    data={triggerData}
-                    dataKey="count"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    animationDuration={600}
-                    animationBegin={0}
-                    isAnimationActive={true}
-                    label={(entry: any) => entry.percentage > 3 ? `${entry.percentage}%` : ''}
-                    labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-                    style={{ fontSize: '11px', fontWeight: '600' }}
+              
+              {/* Donut Chart with top margin */}
+              <div className="mt-3 sm:mt-4">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <defs>
+                      {triggerData.map((_, index) => (
+                        <linearGradient key={`grad-${index}`} id={`triggerGrad${index}`} x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={1} />
+                          <stop offset="100%" stopColor={CHART_COLORS[index % CHART_COLORS.length]} stopOpacity={0.7} />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    <Pie
+                      data={triggerData}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      animationDuration={600}
+                      animationBegin={0}
+                      isAnimationActive={true}
+                      label={(entry: any) => entry.percentage > 3 ? `${entry.percentage}%` : ''}
+                      labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
+                      style={{ fontSize: '11px', fontWeight: '600' }}
+                    >
+                      {triggerData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={`url(#triggerGrad${index})`}
+                          stroke="white"
+                          strokeWidth={2}
+                          style={{
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                            transition: 'all 0.3s ease',
+                          }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        padding: '10px 14px'
+                      }}
+                      itemStyle={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        padding: '2px 0',
+                        color: '#1e293b'
+                      }}
+                      labelStyle={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#0f172a',
+                        marginBottom: '4px'
+                      }}
+                    />
+                    {/* Desktop Legend - Always visible */}
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      wrapperStyle={{ fontSize: '11px', fontWeight: '500', marginTop: '16px' }}
+                      iconSize={8}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Mobile Collapsible Legend */}
+              <div id="trigger-legend-mobile" style={{ display: 'none' }} className="lg:hidden mt-4 space-y-0.5 sm:space-y-1 border-t border-slate-200 pt-3">
+                {triggerData.map((item, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between py-1 sm:py-1.5 px-2 sm:px-3 rounded-md active:bg-slate-100 transition-colors"
                   >
-                    {triggerData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={`url(#triggerGrad${index})`}
-                        stroke="white"
-                        strokeWidth={2}
-                        style={{
-                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-                          transition: 'all 0.3s ease',
-                        }}
+                    <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+                      <div 
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                    }}
-                  />
-                  <Legend 
-                    verticalAlign="bottom" 
-                    height={36}
-                    wrapperStyle={{ fontSize: '11px', fontWeight: '500' }}
-                    iconSize={8}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                      <span className="text-[11px] sm:text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                    </div>
+                    <span 
+                      className="text-sm sm:text-base font-bold ml-2 sm:ml-4 flex-shrink-0"
+                      style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}
+                    >
+                      {item.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </Card>
         </div>
@@ -682,10 +753,18 @@ export function AnalyticsClient() {
                 <h2 className="text-base sm:text-lg font-bold text-slate-900">Top Sources</h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">Most productive data sources</p>
               </div>
+              {sourceData.length > 5 && (
+                <button
+                  onClick={() => setShowAllSources(!showAllSources)}
+                  className="text-xs sm:text-sm text-blue-600 font-semibold hover:text-blue-700 active:text-blue-800 transition-colors cursor-pointer"
+                >
+                  {showAllSources ? 'Show Less' : `Show All (${sourceData.length})`}
+                </button>
+              )}
             </div>
             
             <div className="space-y-3 sm:space-y-4">
-              {sourceData.map((source, index) => {
+              {(showAllSources ? sourceData : sourceData.slice(0, 5)).map((source, index) => {
                 const maxValue = sourceData[0]?.opportunities || 1
                 const percentage = (source.opportunities / maxValue) * 100
                 
@@ -699,7 +778,7 @@ export function AnalyticsClient() {
                         <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate">{source.name}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <span className="text-base sm:text-lg font-bold text-slate-900">{source.opportunities}</span>
+                        <span className="text-sm sm:text-base md:text-lg font-bold text-slate-900">{source.opportunities}</span>
                       </div>
                     </div>
                     <div className="relative h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -745,7 +824,21 @@ export function AnalyticsClient() {
                       backgroundColor: 'white', 
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      padding: '10px 14px',
+                      fontSize: '14px'
+                    }}
+                    itemStyle={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      padding: '2px 0',
+                      color: '#1e293b'
+                    }}
+                    labelStyle={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#0f172a',
+                      marginBottom: '4px'
                     }}
                     cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
                   />
@@ -769,12 +862,24 @@ export function AnalyticsClient() {
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">Engagement Tracking</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-1">Action status breakdown</p>
                 </div>
+                {/* Mobile dropdown button */}
+                <button
+                  onClick={() => {
+                    const legendDiv = document.getElementById('engagement-legend-mobile')
+                    if (legendDiv) {
+                      legendDiv.style.display = legendDiv.style.display === 'none' ? 'block' : 'none'
+                    }
+                  }}
+                  className="lg:hidden text-xs sm:text-sm text-slate-600 font-semibold bg-slate-100 px-2 sm:px-3 py-1 rounded-full hover:bg-slate-200 active:bg-slate-200 transition-colors cursor-pointer"
+                >
+                  Details ▼
+                </button>
               </div>
               
               {/* Donut chart with legend - Responsive Layout */}
               <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8 lg:px-6">
                 {/* Donut Chart - Responsive sizing */}
-                <div className="flex-shrink-0 w-full sm:w-auto mx-auto" style={{ maxWidth: '340px', height: '280px' }}>
+                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ maxWidth: '340px', height: '280px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <defs>
@@ -812,7 +917,25 @@ export function AnalyticsClient() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        contentStyle={CHART_STYLES.tooltip}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                          padding: '10px 14px'
+                        }}
+                        itemStyle={{
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          padding: '2px 0',
+                          color: '#1e293b'
+                        }}
+                        labelStyle={{
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: '#0f172a',
+                          marginBottom: '4px'
+                        }}
                         formatter={(value: any, name: any, props: any) => [
                           `${value} (${props.payload.percentage}%)`,
                           name
@@ -822,12 +945,12 @@ export function AnalyticsClient() {
                   </ResponsiveContainer>
                 </div>
                 
-                {/* Legend - Stacks on mobile, side-by-side on desktop */}
-                <div className="space-y-1 w-full lg:w-[240px]">
+                {/* Desktop Legend - Always visible, stacks side-by-side on desktop */}
+                <div className="hidden lg:block space-y-0.5 w-[240px]">
                   {engagementData.map((item, index) => (
                     <div 
                       key={index}
-                      className="flex items-center justify-between py-1.5 px-3 rounded-md hover:bg-slate-50 transition-colors group"
+                      className="flex items-center justify-between py-1 px-3 rounded-md hover:bg-slate-50 transition-colors group"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div 
@@ -845,6 +968,30 @@ export function AnalyticsClient() {
                     </div>
                   ))}
                 </div>
+              </div>
+              
+              {/* Mobile Collapsible Legend */}
+              <div id="engagement-legend-mobile" style={{ display: 'none' }} className="lg:hidden mt-4 space-y-0.5 sm:space-y-1 border-t border-slate-200 pt-3">
+                {engagementData.map((item, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between py-1 sm:py-1.5 px-2 sm:px-3 rounded-md active:bg-slate-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+                      <div 
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-[11px] sm:text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                    </div>
+                    <span 
+                      className="text-sm sm:text-base font-bold ml-2 sm:ml-4 flex-shrink-0"
+                      style={{ color: item.color }}
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </Card>
@@ -893,9 +1040,22 @@ export function AnalyticsClient() {
                     backgroundColor: 'white', 
                     border: '1px solid #e2e8f0',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    padding: '10px 14px',
+                    fontSize: '14px'
                   }}
-                  labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                  itemStyle={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    padding: '2px 0',
+                    color: '#1e293b'
+                  }}
+                  labelStyle={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#0f172a',
+                    marginBottom: '4px'
+                  }}
                 />
                 <Area
                   type="monotone"

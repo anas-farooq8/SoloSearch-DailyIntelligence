@@ -537,10 +537,10 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         <div className="flex items-center justify-between gap-4 page-header-content">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <LayoutDashboard className="h-7 w-7 text-blue-600" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+              <LayoutDashboard className="hidden sm:flex h-7 w-7 text-blue-600" />
+              <h1 className="text-lg sm:text-3xl font-bold text-slate-900">Dashboard</h1>
             </div>
-            <p className="text-slate-600 text-sm sm:text-base">Daily Intelligence Opportunities</p>
+            <p className="text-slate-600 text-xs sm:text-base">Daily Intelligence Opportunities</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
