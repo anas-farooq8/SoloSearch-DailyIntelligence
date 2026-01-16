@@ -89,9 +89,17 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
                   <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 truncate">{card.title}</p>
                   {loading ? (
                     <>
-                      <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16 mt-1" />
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16" />
+                        {card.showComparison && (
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                            <Skeleton className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded" />
+                            <Skeleton className="h-4 sm:h-5 md:h-6 w-12 sm:w-14 md:w-16" />
+                          </div>
+                        )}
+                      </div>
                       {card.showComparison && (
-                        <Skeleton className="h-3 w-20 mt-1" />
+                        <Skeleton className="h-3 sm:h-4 w-24 sm:w-28 mt-1" />
                       )}
                     </>
                   ) : (

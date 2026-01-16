@@ -288,11 +288,113 @@ export function LeadsTable({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        {/* View Switcher + Info Row Skeleton */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 py-3 border-b border-slate-100 gap-3 sm:gap-0">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-28" />
+          </div>
+          <Skeleton className="h-4 w-48 hidden md:block" />
+        </div>
+
+        {/* Info Row Skeleton */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-b border-slate-200 gap-2 sm:gap-0">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="overflow-x-auto -mx-px">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[85px] min-w-[85px] pl-4">
+                  <Skeleton className="h-6 w-12" />
+                </TableHead>
+                <TableHead className="w-[145px] min-w-[125px] px-3">
+                  <Skeleton className="h-6 w-16" />
+                </TableHead>
+                <TableHead className="w-[125px] min-w-[105px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[115px] min-w-[100px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[115px] min-w-[100px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[105px] min-w-[90px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[105px] min-w-[90px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[125px] min-w-[105px] px-3">
+                  <Skeleton className="h-6 w-20" />
+                </TableHead>
+                <TableHead className="w-[125px] min-w-[105px] px-3">
+                  <Skeleton className="h-6 w-14" />
+                </TableHead>
+                <TableHead className="w-[115px] min-w-[100px] px-3 pr-3">
+                  <Skeleton className="h-6 w-16" />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(10)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell className="pl-5">
+                    <Skeleton className="h-5 w-10 mb-1" />
+                    <Skeleton className="h-3 w-20" />
+                  </TableCell>
+                  <TableCell className="max-w-[145px] px-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="max-w-[125px] px-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <div className="flex flex-wrap gap-1">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-14" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <div className="flex flex-wrap gap-1">
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell className="px-3">
+                    <div className="flex flex-wrap gap-1">
+                      <Skeleton className="h-5 w-12" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-3 pr-3">
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination Skeleton */}
+        <div className="flex flex-col sm:flex-row items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-t border-slate-200 gap-2 sm:gap-0">
+          <Skeleton className="h-4 w-32" />
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Skeleton className="h-8 sm:h-9 flex-1 sm:flex-none w-full sm:w-24" />
+            <Skeleton className="h-8 sm:h-9 flex-1 sm:flex-none w-full sm:w-20" />
+          </div>
         </div>
       </div>
     )

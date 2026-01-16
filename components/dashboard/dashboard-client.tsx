@@ -522,6 +522,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
           onFilterChange={handleFilterChange}
           filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], sources: [], groups: [] }}
           tags={dashboardData?.tags || []}
+          loading={isLoading}
         />
 
         <LeadsTable

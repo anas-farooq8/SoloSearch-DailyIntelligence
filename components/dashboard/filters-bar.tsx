@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Search, X, ChevronDown } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Filters, Tag } from "@/types/database"
 
 interface FiltersBarProps {
@@ -22,9 +23,10 @@ interface FiltersBarProps {
     groups: string[]
   }
   tags: Tag[]
+  loading?: boolean
 }
 
-export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: FiltersBarProps) {
+export function FiltersBar({ filters, onFilterChange, filterOptions, tags, loading = false }: FiltersBarProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -54,6 +56,39 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
     filters.sources.length > 0 ||
     filters.tagIds.length > 0 ||
     filters.groups.length > 0
+
+  // Show skeleton when loading
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+        {/* Top Row: Search + Lead Score Range + Clear Button Skeleton */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 p-3 sm:p-4 border-b border-slate-100">
+          {/* Search Bar Skeleton */}
+          <div className="relative flex-1">
+            <Skeleton className="h-10 w-full" />
+          </div>
+          
+          {/* Lead Score Range Skeleton */}
+          <div className="flex flex-col gap-2 md:w-[480px] bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+          
+          {/* Clear Button Skeleton */}
+          <Skeleton className="h-10 md:w-[120px]" />
+        </div>
+
+        {/* Filters Grid Skeleton */}
+        <div className="p-3 sm:p-4 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {[...Array(7)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Prevent hydration mismatch by only rendering dropdowns after mount
   if (!mounted) {
