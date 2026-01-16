@@ -663,13 +663,13 @@ export function AnalyticsClient() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={isDesktop ? 80 : 60}
-                      outerRadius={isDesktop ? 130 : 100}
+                      innerRadius={isDesktop ? 90 : 60}
+                      outerRadius={isDesktop ? 140 : 100}
                       paddingAngle={2}
                       animationDuration={600}
                       animationBegin={0}
                       isAnimationActive={true}
-                      label={(entry: any) => entry.percentage > 3 ? `${entry.percentage}%` : ''}
+                      label={(entry: any) => `${entry.percentage}%`}
                       labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
                       style={{ fontSize: '11px', fontWeight: '600' }}
                     >
@@ -903,13 +903,13 @@ export function AnalyticsClient() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={isDesktop ? 80 : 55}
-                        outerRadius={isDesktop ? 130 : 95}
+                        innerRadius={isDesktop ? 90 : 60}
+                        outerRadius={isDesktop ? 140 : 100}
                         paddingAngle={2}
                         animationDuration={600}
                         animationBegin={0}
                         isAnimationActive={true}
-                        label={(entry: any) => entry.percentage >= 3 ? `${entry.percentage}%` : ''}
+                        label={(entry: any) => `${entry.percentage}%`}
                         labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
                         style={{ fontSize: '12px', fontWeight: '600', fill: '#1e293b' }}
                       >
