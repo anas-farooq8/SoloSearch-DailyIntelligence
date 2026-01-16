@@ -23,6 +23,7 @@ import {
 import { subDays, format, startOfDay, endOfDay, eachDayOfInterval, isWithinInterval } from "date-fns"
 import { TrendingUp, CheckCircle, Sparkles, Target, BarChart3, Calendar } from "lucide-react"
 import { getGroupDisplayName, CHART_COLORS, UNTAGGED_TAG, CHART_STYLES } from "@/lib/constants"
+import { useIsDesktop } from "@/lib/hooks/use-media-query"
 
 interface AnalyticsArticle {
   id: string
@@ -67,6 +68,7 @@ export function AnalyticsClient() {
     to: endOfDay(new Date()),
   })
   const [showAllSources, setShowAllSources] = useState(false)
+  const isDesktop = useIsDesktop()
 
   const { data, isLoading } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
     revalidateOnFocus: false,
@@ -348,7 +350,7 @@ export function AnalyticsClient() {
                     <p className="text-xs sm:text-sm text-slate-500 mt-1">Distribution across source groups</p>
                   </div>
                 </div>
-                <Skeleton className="h-[280px] w-full" />
+                <Skeleton className="h-[340px] w-full" />
               </div>
             </Card>
             
@@ -363,7 +365,7 @@ export function AnalyticsClient() {
                     Top 8
                   </span>
                 </div>
-                <Skeleton className="h-[280px] w-full" />
+                <Skeleton className="h-[340px] w-full" />
               </div>
             </Card>
           </div>
@@ -493,7 +495,7 @@ export function AnalyticsClient() {
                     <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900">
                       {topLevelStats.highPriority.toLocaleString()}
                     </p>
-                    <span className="text-[8px] sm:text-[9px] md:text-xs text-amber-600 font-medium bg-amber-100 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                    <span className="text-[10px] sm:text-xs md:text-sm text-amber-600 font-medium bg-amber-100 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
                       ≥ 7
                     </span>
                   </div>
@@ -568,7 +570,7 @@ export function AnalyticsClient() {
                   <p className="text-xs sm:text-sm text-slate-500 mt-1">Distribution across source groups</p>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={340}>
                 <BarChart data={groupData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <defs>
                     <linearGradient id="groupGradient" x1="0" y1="0" x2="1" y2="0">
@@ -645,9 +647,7 @@ export function AnalyticsClient() {
                 </span>
               </div>
               
-              {/* Donut Chart with top margin */}
-              <div className="mt-3 sm:mt-4">
-                <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={340}>
                   <PieChart>
                     <defs>
                       {triggerData.map((_, index) => (
@@ -663,8 +663,8 @@ export function AnalyticsClient() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={100}
+                      innerRadius={isDesktop ? 80 : 60}
+                      outerRadius={isDesktop ? 130 : 100}
                       paddingAngle={2}
                       animationDuration={600}
                       animationBegin={0}
@@ -707,15 +707,22 @@ export function AnalyticsClient() {
                         marginBottom: '4px'
                       }}
                     />
-                    {/* Desktop Legend - Always visible */}
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36}
-                      wrapperStyle={{ fontSize: '11px', fontWeight: '500', marginTop: '16px' }}
-                      iconSize={8}
-                    />
                   </PieChart>
                 </ResponsiveContainer>
+              
+              {/* Desktop Legend - Hidden on mobile, shown with spacing on desktop */}
+              <div className="hidden lg:block mt-3">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                  {triggerData.map((item, index) => (
+                    <div key={index} className="flex items-center gap-1.5">
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <span className="text-xs font-medium text-slate-700">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
               
               {/* Mobile Collapsible Legend */}
@@ -879,8 +886,8 @@ export function AnalyticsClient() {
               {/* Donut chart with legend - Responsive Layout */}
               <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8 lg:px-6">
                 {/* Donut Chart - Responsive sizing */}
-                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ maxWidth: '340px', height: '280px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ maxWidth: '340px' }}>
+                  <ResponsiveContainer width="100%" height={280}>
                     <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <defs>
                         {engagementData.map((_, index) => (
@@ -896,8 +903,8 @@ export function AnalyticsClient() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={95}
+                        innerRadius={isDesktop ? 80 : 55}
+                        outerRadius={isDesktop ? 130 : 95}
                         paddingAngle={2}
                         animationDuration={600}
                         animationBegin={0}
