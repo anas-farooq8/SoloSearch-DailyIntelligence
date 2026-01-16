@@ -18,7 +18,7 @@ interface FiltersBarProps {
   filterOptions: {
     sectors: string[]
     triggers: string[]
-    countries: string[]
+    sources: string[]
     groups: string[]
   }
   tags: Tag[]
@@ -39,7 +39,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
       sectorGroup: 'all',
       sectors: [],
       triggers: [],
-      country: null,
+      sources: [],
       tagIds: [],
       groups: [],
     })
@@ -51,7 +51,7 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
     filters.sectorGroup !== null ||
     filters.sectors.length > 0 ||
     filters.triggers.length > 0 ||
-    filters.country ||
+    filters.sources.length > 0 ||
     filters.tagIds.length > 0 ||
     filters.groups.length > 0
 
@@ -409,42 +409,43 @@ export function FiltersBar({ filters, onFilterChange, filterOptions, tags }: Fil
           </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Country */}
+          {/* Sources Multi-select */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
                 className={`w-full justify-between cursor-pointer h-10 text-sm ${
-                  filters.country ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
+                  filters.sources.length > 0 ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : ''
                 }`}
               >
-                <span className="truncate">{filters.country || "Countries"}</span>
+                <span className="truncate">Sources {filters.sources.length > 0 && `(${filters.sources.length})`}</span>
                 <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-[300px] overflow-y-auto">
             <DropdownMenuCheckboxItem
-              key="all-countries"
-              checked={!filters.country}
+              key="all-sources"
+              checked={filters.sources.length === 0}
               onCheckedChange={(checked) => {
                 if (checked) {
-                  onFilterChange({ country: null })
+                  onFilterChange({ sources: [], groups: [] }) // Clear groups when manually clearing sources
                 }
               }}
             >
-              All Countries
+              All Sources
             </DropdownMenuCheckboxItem>
-            {filterOptions.countries.map((country) => (
+            {(filterOptions.sources || []).map((source) => (
               <DropdownMenuCheckboxItem
-                key={country}
-                checked={filters.country === country}
+                key={source}
+                checked={filters.sources.includes(source)}
                 onCheckedChange={(checked) => {
-                  if (checked) {
-                    onFilterChange({ country })
-                  }
+                  onFilterChange({
+                    sources: checked ? [...filters.sources, source] : filters.sources.filter((s) => s !== source),
+                    groups: [], // Clear groups when manually selecting sources
+                  })
                 }}
               >
-                {country}
+                {source}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>

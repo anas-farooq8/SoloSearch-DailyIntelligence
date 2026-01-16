@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -55,7 +55,7 @@ function getGroupName(groupId: string | null | undefined): string {
   return GROUP_MAPPING[groupId] || groupId
 }
 
-type SortField = 'score' | 'date' | 'company' | 'group' | 'location'
+type SortField = 'score' | 'date' | 'company' | 'group' | 'location' | 'source'
 
 const getProcessedAt = (article: Article) => article.processed_at || null
 
@@ -77,6 +77,7 @@ export function LeadsTable({
   activeCount,
   hiddenCount,
 }: LeadsTableProps) {
+  const tableTopRef = useRef<HTMLDivElement>(null)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<SortField | null>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -88,6 +89,21 @@ export function LeadsTable({
   const [isDeletingNote, setIsDeletingNote] = useState(false)
   const pageSize = 50
   const totalPages = Math.ceil(total / pageSize)
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (tableTopRef.current) {
+      // Use setTimeout to ensure DOM has updated
+      const timeoutId = setTimeout(() => {
+        tableTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [page])
+
+  const handlePageChange = (newPage: number) => {
+    onPageChange(newPage)
+  }
 
   const handleSort = (field: SortField) => {
     if (sortBy === field) {
@@ -153,6 +169,16 @@ export function LeadsTable({
         if (aEmpty) return 1
         if (bEmpty) return -1
         diff = locationA.toLowerCase().localeCompare(locationB.toLowerCase())
+        break
+      case 'source':
+        aEmpty = !a.source || a.source.trim() === ''
+        bEmpty = !b.source || b.source.trim() === ''
+        if (aEmpty && bEmpty) return 0
+        if (aEmpty) return 1
+        if (bEmpty) return -1
+        const sourceA = (a.source || '').toLowerCase()
+        const sourceB = (b.source || '').toLowerCase()
+        diff = sourceA.localeCompare(sourceB)
         break
     }
     
@@ -281,7 +307,7 @@ export function LeadsTable({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+    <div ref={tableTopRef} className="bg-white rounded-lg border border-slate-200 shadow-sm">
       {/* View Switcher + Info Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 py-3 border-b border-slate-100 gap-3 sm:gap-0">
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
@@ -404,7 +430,21 @@ export function LeadsTable({
               <TableHead className="w-[115px] min-w-[100px] px-3">Sector</TableHead>
               <TableHead className="w-[115px] min-w-[100px] px-3">Signals</TableHead>
               <TableHead className="w-[105px] min-w-[90px] px-3">Amount</TableHead>
-              <TableHead className="w-[105px] min-w-[90px] px-3">Source</TableHead>
+              <TableHead className="w-[105px] min-w-[90px] px-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('source')}
+                  className="h-8 px-2 hover:bg-slate-100 cursor-pointer text-xs whitespace-nowrap"
+                >
+                  Source
+                  {sortBy === 'source' ? (
+                    sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <ArrowUpDown className="ml-1 h-3 w-3 sm:h-4 sm:w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
               <TableHead className="w-[115px] min-w-[100px] px-3">
                 <Button 
                   variant="ghost" 
@@ -650,7 +690,7 @@ export function LeadsTable({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => onPageChange(page - 1)} 
+            onClick={() => handlePageChange(page - 1)} 
             disabled={page === 0}
             className="flex-1 sm:flex-none h-8 sm:h-9 text-xs sm:text-sm"
           >
@@ -661,7 +701,7 @@ export function LeadsTable({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => onPageChange(page + 1)} 
+            onClick={() => handlePageChange(page + 1)} 
             disabled={page >= totalPages - 1}
             className="flex-1 sm:flex-none h-8 sm:h-9 text-xs sm:text-sm"
           >

@@ -22,9 +22,10 @@ interface DashboardData {
   filterOptions: {
     sectors: string[]
     triggers: string[]
-    countries: string[]
+    sources: string[]
     groups: string[]
   }
+  groupToSources: Record<string, string[]>
 }
 
 // API fetcher
@@ -84,9 +85,9 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
       if (!hasTrigger) return false
     }
 
-    // Country filter
-    if (filters.country) {
-      if (article.location_country !== filters.country) return false
+    // Sources filter
+    if (filters.sources && filters.sources.length > 0) {
+      if (!article.source || !filters.sources.includes(article.source)) return false
     }
 
     // Tag filter
@@ -135,7 +136,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     sectorGroup: null,
     sectors: [],
     triggers: [],
-    country: null,
+    sources: [],
     tagIds: [],
     groups: [],
   })
@@ -289,6 +290,36 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       setFilters((prev) => ({ ...prev, sectors: [] }))
     }
   }, [filters.sectorGroup, dashboardData?.filterOptions?.sectors])
+
+  // Update sources based on group selection (similar to how sectors work with sectorGroup)
+  useEffect(() => {
+    if (!dashboardData?.groupToSources) return
+
+    const groupToSources = dashboardData.groupToSources
+    const selectedGroups = filters.groups
+
+    if (selectedGroups.length === 0) {
+      // If no groups selected, don't auto-update sources (let user control it)
+      return
+    }
+
+    // Get all sources for the selected groups
+    const sourcesForGroups = selectedGroups.flatMap((groupId) => {
+      return groupToSources[groupId] || []
+    })
+    // Remove duplicates and sort
+    const uniqueSources = [...new Set(sourcesForGroups)].sort()
+    
+    // Only update if sources have changed to avoid infinite loops
+    setFilters((prev) => {
+      const currentSources = prev.sources.sort().join(',')
+      const newSources = uniqueSources.sort().join(',')
+      if (currentSources !== newSources) {
+        return { ...prev, sources: uniqueSources }
+      }
+      return prev
+    })
+  }, [filters.groups, dashboardData?.groupToSources])
 
   // Separate articles into active and hidden (Not Relevant)
   const { activeArticles, hiddenArticles } = useMemo(() => {
@@ -489,7 +520,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         <FiltersBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], countries: [], groups: [] }}
+          filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], sources: [], groups: [] }}
           tags={dashboardData?.tags || []}
         />
 

@@ -60,7 +60,7 @@ export interface Filters {
   sectorGroup: 'all' | 'health' | 'others' | null
   sectors: string[]
   triggers: string[]
-  country: string | null
+  sources: string[]
   tagIds: string[]
   groups: string[]
 }
