@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,26 +25,23 @@ interface LeadsTableProps {
   tags: Tag[]
   onTagUpdate: (articleId: string, tagId: string, action: "add" | "remove") => void
   filters: Filters
-  userId: string
   addingTagId: string | null
   removingTagId: string | null
   onNoteUpdate?: (articleId: string, note: any | null) => void
-  // View switcher props
   activeView: "active" | "hidden"
   onViewChange: (view: "active" | "hidden") => void
   activeCount: number
   hiddenCount: number
 }
 
-function getScoreBand(score: number) {
-  if (score >= 8) return { label: "Immediate outreach", emoji: "", color: "bg-red-100 text-red-800" }
-  if (score >= 6) return { label: "High interest", emoji: "", color: "bg-green-100 text-green-800" }
-  if (score >= 4) return { label: "Monitor", emoji: "", color: "bg-amber-100 text-amber-800" }
-  return { label: "Low", emoji: "", color: "bg-slate-100 text-slate-800" }
-}
+import { getGroupDisplayName as getGroupDisplayNameShared, PAGE_SIZE } from "@/lib/constants"
 
-// Group mapping: maps group IDs to group names
-import { getGroupDisplayName as getGroupDisplayNameShared } from "@/lib/constants"
+function getScoreBand(score: number) {
+  if (score >= 8) return { label: "Immediate outreach", color: "bg-red-100 text-red-800" }
+  if (score >= 6) return { label: "High interest", color: "bg-green-100 text-green-800" }
+  if (score >= 4) return { label: "Monitor", color: "bg-amber-100 text-amber-800" }
+  return { label: "Low", color: "bg-slate-100 text-slate-800" }
+}
 
 function getGroupName(groupId: string | null | undefined): string {
   if (!groupId) return "-"
@@ -65,7 +62,6 @@ export function LeadsTable({
   tags,
   onTagUpdate,
   filters,
-  userId,
   addingTagId,
   removingTagId,
   onNoteUpdate,
@@ -74,7 +70,6 @@ export function LeadsTable({
   activeCount,
   hiddenCount,
 }: LeadsTableProps) {
-  const tableTopRef = useRef<HTMLDivElement>(null)
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [sortBy, setSortBy] = useState<SortField | null>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -84,12 +79,7 @@ export function LeadsTable({
   const [isEditingNote, setIsEditingNote] = useState(false)
   const [isSavingNote, setIsSavingNote] = useState(false)
   const [isDeletingNote, setIsDeletingNote] = useState(false)
-  const pageSize = 50
-  const totalPages = Math.ceil(total / pageSize)
-
-  const handlePageChange = (newPage: number) => {
-    onPageChange(newPage)
-  }
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const handleSort = (field: SortField) => {
     if (sortBy === field) {
@@ -395,7 +385,7 @@ export function LeadsTable({
   }
 
   return (
-    <div ref={tableTopRef} className="bg-white rounded-lg border border-slate-200 shadow-sm">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
       {/* View Switcher + Info Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-4 py-3 border-b border-slate-100 gap-3 sm:gap-0">
         <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
@@ -457,7 +447,7 @@ export function LeadsTable({
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 sm:px-3 py-3 sm:py-4 border-b border-slate-200 gap-2 sm:gap-0">
         <p className="text-xs sm:text-sm text-slate-600">
-          Showing {page * pageSize + 1} - {Math.min((page + 1) * pageSize, total)} of {total} leads
+          Showing {page * PAGE_SIZE + 1} - {Math.min((page + 1) * PAGE_SIZE, total)} of {total} leads
         </p>
         <Button variant="outline" size="sm" onClick={handleExport} className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm">
           <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
@@ -570,9 +560,7 @@ export function LeadsTable({
             {displayArticles.map((article) => {
               const band = getScoreBand(article.lead_score)
               const articleTags = article.tags || []
-
               const hasNote = !!article.note
-              const isHovered = hoveredArticleId === article.id
 
               return (
                 <TableRow 
@@ -778,7 +766,7 @@ export function LeadsTable({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => handlePageChange(page - 1)} 
+            onClick={() => onPageChange(page - 1)} 
             disabled={page === 0}
             className="flex-1 sm:flex-none h-8 sm:h-9 text-xs sm:text-sm"
           >
@@ -789,7 +777,7 @@ export function LeadsTable({
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => handlePageChange(page + 1)} 
+            onClick={() => onPageChange(page + 1)} 
             disabled={page >= totalPages - 1}
             className="flex-1 sm:flex-none h-8 sm:h-9 text-xs sm:text-sm"
           >

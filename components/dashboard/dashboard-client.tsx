@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react"
 import useSWR from "swr"
-import { createClient } from "@/lib/supabase/client"
 import type { Article, Tag, KPIStats, Filters } from "@/types/database"
+import { PAGE_SIZE } from "@/lib/constants"
 import { KPICards } from "./kpi-cards"
 import { FiltersBar } from "./filters-bar"
 import { LeadsTable } from "./leads-table"
@@ -11,10 +11,6 @@ import { TagsManager } from "./tags-manager"
 import { HowItWorksGuide } from "./how-it-works-guide"
 import { Button } from "@/components/ui/button"
 import { Tags, HelpCircle, LayoutDashboard } from "lucide-react"
-
-interface DashboardClientProps {
-  userId: string
-}
 
 interface DashboardData {
   articles: Article[]
@@ -122,9 +118,7 @@ const applyFilters = (articles: Article[], filters: Filters): Article[] => {
   })
 }
 
-export function DashboardClient({ userId }: DashboardClientProps) {
-  const supabase = createClient()
-  
+export function DashboardClient() {
   // Initialize page from localStorage or default to 0
   const initialPage = useMemo(() => {
     if (typeof window !== 'undefined') {
@@ -228,14 +222,6 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     dedupingInterval: 300000, // Cache for 5 minutes (300 seconds)
     keepPreviousData: true, // Keep previous data while fetching new data
   })
-
-  // Find the "Not Relevant" tag ID
-  const notRelevantTagId = useMemo(() => {
-    const notRelevantTag = dashboardData?.tags.find(
-      (tag) => tag.name.toLowerCase() === "not relevant"
-    )
-    return notRelevantTag?.id || null
-  }, [dashboardData?.tags])
 
   // Apply default sector group filter on initial load (only once when data loads)
   useEffect(() => {
@@ -360,8 +346,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   }, [dashboardData?.articles, calculateKPIs])
 
   // Paginate filtered articles
-  const pageSize = 50
-  const totalPages = Math.ceil(filteredArticles.length / pageSize)
+  const totalPages = Math.ceil(filteredArticles.length / PAGE_SIZE)
   
   // Ensure page is within valid bounds
   useEffect(() => {
@@ -372,8 +357,8 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   
   const paginatedArticles = useMemo(() => {
     const validPage = totalPages > 0 ? Math.min(page, totalPages - 1) : 0
-    const start = validPage * pageSize
-    const end = start + pageSize
+    const start = validPage * PAGE_SIZE
+    const end = start + PAGE_SIZE
     return filteredArticles.slice(start, end)
   }, [filteredArticles, page, totalPages])
 
@@ -562,7 +547,6 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         tags={dashboardData?.tags || []}
         onTagUpdate={handleTagUpdate}
         filters={filters}
-        userId={userId}
         addingTagId={addingTagId}
         removingTagId={removingTagId}
         onNoteUpdate={handleNoteUpdate}

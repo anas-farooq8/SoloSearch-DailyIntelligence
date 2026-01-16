@@ -35,6 +35,9 @@ export const UNTAGGED_TAG = {
   color: "#94a3b8",
 } as const
 
+// Pagination Constants
+export const PAGE_SIZE = 50
+
 // Chart Style Constants
 export const CHART_STYLES = {
   cartesianGrid: {

@@ -18,7 +18,7 @@ export default async function DashboardPage() {
 
   return (
     <SharedLayout>
-      <DashboardClient userId={user.id} />
+      <DashboardClient />
     </SharedLayout>
   )
 }
