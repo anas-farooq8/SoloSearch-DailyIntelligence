@@ -72,7 +72,7 @@ export function AnalyticsClient() {
     setMounted(true)
   }, [])
 
-  const { data, isLoading } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
+  const { data } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     dedupingInterval: 300000, // Cache for 5 minutes (300 seconds)
@@ -291,7 +291,9 @@ export function AnalyticsClient() {
   }, [filteredArticles, dateRange])
 
   // Skeleton Loading Component - matching dashboard style
-  if (isLoading || !mounted) {
+  // Only show skeleton on very first load (not mounted yet) OR if there's truly no data at all
+  // This prevents flash when navigating with cached data
+  if (!mounted || !data) {
     return (
       <div className="min-h-screen bg-slate-50">
         {/* Page Header - Show actual content, not skeleton */}
