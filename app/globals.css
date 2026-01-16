@@ -175,3 +175,24 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgb(148 163 184);
 }
+
+/* Sidebar width variables */
+:root {
+  --sidebar-width-collapsed: 5rem;
+  --sidebar-width-expanded: 16rem;
+  --sidebar-width-mobile: 17.5rem;
+  --mobile-menu-size: 3.5rem;
+}
+
+/* Mobile menu spacing - only on mobile, reset on desktop */
+@media (max-width: 1023px) {
+  .page-header-content {
+    padding-left: var(--mobile-menu-size);
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-header-content {
+    padding-left: 0;
+  }
+}

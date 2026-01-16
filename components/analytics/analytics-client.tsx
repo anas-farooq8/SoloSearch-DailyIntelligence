@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import useSWR from "swr"
 import { Card } from "@/components/ui/card"
 import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker"
@@ -62,7 +62,9 @@ export function AnalyticsClient() {
 
   const { data, isLoading } = useSWR<AnalyticsData>("/api/analytics", fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 60000, // Cache for 1 minute
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // Cache for 5 minutes (300 seconds)
+    keepPreviousData: true, // Keep previous data while fetching new data
   })
 
   // Filter articles by date range
@@ -248,10 +250,10 @@ export function AnalyticsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Page Header */}
       <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 page-header-content">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics</h1>
             <p className="text-slate-600 mt-1 text-sm sm:text-base">

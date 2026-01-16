@@ -248,7 +248,9 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     mutate: mutateDashboard,
   } = useSWR<DashboardData>("/api/dashboard/data", fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 10000, // Cache for 10 seconds
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // Cache for 5 minutes (300 seconds)
+    keepPreviousData: true, // Keep previous data while fetching new data
   })
 
   // Find the "Not Relevant" tag ID
@@ -529,10 +531,10 @@ export function DashboardClient({ userId }: DashboardClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Page Header */}
       <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 page-header-content">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
             <p className="text-slate-600 mt-1 text-sm sm:text-base">Daily Intelligence Opportunities</p>

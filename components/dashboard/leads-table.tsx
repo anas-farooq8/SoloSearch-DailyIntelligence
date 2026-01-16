@@ -90,17 +90,6 @@ export function LeadsTable({
   const pageSize = 50
   const totalPages = Math.ceil(total / pageSize)
 
-  // Scroll to top when page changes
-  useEffect(() => {
-    if (tableTopRef.current) {
-      // Use setTimeout to ensure DOM has updated
-      const timeoutId = setTimeout(() => {
-        tableTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-      return () => clearTimeout(timeoutId)
-    }
-  }, [page])
-
   const handlePageChange = (newPage: number) => {
     onPageChange(newPage)
   }
