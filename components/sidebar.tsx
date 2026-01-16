@@ -147,7 +147,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0">
+        <nav className="flex-1 p-3 pb-0 space-y-1 overflow-y-auto min-h-0">
           {navItems.map((item) => {
             const isActive = pathname === item.href
             const Icon = item.icon
@@ -180,7 +180,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         </nav>
 
         {/* Logout Button - Always visible at bottom */}
-        <div className="p-3 border-t border-slate-200 flex-shrink-0">
+        <div className="p-3 pt-4 pb-4 border-t border-slate-200 flex-shrink-0">
           <Button
             variant="ghost"
             onClick={() => {
@@ -189,7 +189,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
             }}
             className={cn(
               "w-full justify-start gap-3 text-slate-700 transition-all duration-200",
-              "bg-slate-100 hover:bg-slate-200",
+              "bg-slate-100 hover:bg-slate-200 rounded-md",
               isCollapsed && isDesktop && "justify-center px-2"
             )}
           >
