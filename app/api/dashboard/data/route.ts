@@ -98,13 +98,10 @@ export async function GET() {
     const awaitingReview = articles.filter((article) => !article.tags || article.tags.length === 0).length
 
     const kpis = {
-      total_today: 0, // Will be calculated on client
-      total_yesterday: 0, // Will be calculated on client
-      high_priority_today: 0, // Will be calculated on client
-      high_priority_yesterday: 0, // Will be calculated on client
       awaiting_review: awaitingReview,
       weekly_added: 0, // Will be calculated on client
       weekly_added_previous: 0, // Will be calculated on client
+      weekly_high_priority: 0, // Will be calculated on client
     }
 
     return NextResponse.json({

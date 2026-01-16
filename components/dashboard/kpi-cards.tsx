@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { KPIStats } from "@/types/database"
-import { TrendingUp, AlertTriangle, Clock, CalendarDays, ArrowUp, ArrowDown } from "lucide-react"
+import { AlertTriangle, Clock, CalendarDays, ArrowUp, ArrowDown } from "lucide-react"
 
 interface KPICardsProps {
   kpis?: KPIStats
@@ -32,34 +32,6 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
 
   const cards: CardData[] = [
     {
-      title: "Processed Today",
-      value: kpis?.total_today ?? 0,
-      yesterdayValue: kpis?.total_yesterday ?? 0,
-      icon: TrendingUp,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      showComparison: true,
-      comparisonLabel: "Yesterday",
-    },
-    {
-      title: "High Priority Today",
-      value: kpis?.high_priority_today ?? 0,
-      yesterdayValue: kpis?.high_priority_yesterday ?? 0,
-      icon: AlertTriangle,
-      color: "text-red-600",
-      bg: "bg-red-50",
-      showComparison: true,
-      comparisonLabel: "Yesterday",
-    },
-    {
-      title: "Awaiting Review",
-      value: kpis?.awaiting_review ?? 0,
-      icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      showComparison: false,
-    },
-    {
       title: "Weekly Added",
       value: kpis?.weekly_added ?? 0,
       yesterdayValue: kpis?.weekly_added_previous ?? 0,
@@ -69,17 +41,44 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
       showComparison: true,
       comparisonLabel: "Last Week",
     },
+    {
+      title: "High Priority Weekly",
+      value: kpis?.weekly_high_priority ?? 0,
+      icon: AlertTriangle,
+      color: "text-red-600",
+      bg: "bg-red-50",
+      showComparison: false,
+    },
+    {
+      title: "Awaiting Review",
+      value: kpis?.awaiting_review ?? 0,
+      icon: Clock,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      showComparison: false,
+    },
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-      {cards.map((card) => {
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+      {cards.map((card, index) => {
         const change = card.showComparison && card.yesterdayValue !== undefined
           ? calculateChange(card.value, card.yesterdayValue)
           : null
 
+        // First card (Weekly Added) spans 2 columns on mobile, 1 on desktop
+        const isFirstCard = index === 0
+        const cardClassName = isFirstCard ? "col-span-2 lg:col-span-1" : "col-span-1"
+
+        // Calculate percentage for High Priority Weekly
+        const isHighPriorityWeekly = card.title === "High Priority Weekly"
+        const weeklyTotal = kpis?.weekly_added ?? 0
+        const highPriorityPercentage = weeklyTotal > 0 
+          ? Math.round((card.value / weeklyTotal) * 100)
+          : 0
+
         return (
-          <Card key={card.title} className="shadow-sm">
+          <Card key={card.title} className={`shadow-sm ${cardClassName}`}>
             <CardContent className="p-2.5 sm:p-3.5 md:p-4">
               <div className="flex items-start gap-2 sm:gap-3">
                 <div className={`p-1.5 sm:p-2 rounded-lg ${card.bg} flex-shrink-0`}>
@@ -90,7 +89,14 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
                   {loading ? (
                     <>
                       <div className="flex items-center justify-between gap-2 mt-1">
-                        <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16" />
+                        {isHighPriorityWeekly ? (
+                          <div className="flex items-baseline gap-1 sm:gap-2">
+                            <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16" />
+                            <Skeleton className="h-4 w-8 rounded-full" />
+                          </div>
+                        ) : (
+                          <Skeleton className="h-5 sm:h-6 md:h-7 w-10 sm:w-14 md:w-16" />
+                        )}
                         {card.showComparison && (
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             <Skeleton className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded" />
@@ -98,14 +104,23 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
                           </div>
                         )}
                       </div>
-                      {card.showComparison && (
+                      {(card.showComparison || isHighPriorityWeekly) && (
                         <Skeleton className="h-3 sm:h-4 w-24 sm:w-28 mt-1" />
                       )}
                     </>
                   ) : (
                     <>
                       <div className="flex items-center justify-between gap-2 mt-1">
-                        <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">{card.value}</p>
+                        {isHighPriorityWeekly ? (
+                          <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+                            <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">{card.value}</p>
+                            <span className="text-[10px] sm:text-xs md:text-sm text-red-600 font-medium bg-red-100 px-1 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                              ≥ 7
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">{card.value}</p>
+                        )}
                         {change && (
                           <div className={`flex items-center gap-0.5 flex-shrink-0 ${change.isIncrease ? 'text-green-600' : 'text-red-600'}`}>
                             {change.isIncrease ? (
@@ -119,11 +134,18 @@ export function KPICards({ kpis, loading }: KPICardsProps) {
                           </div>
                         )}
                       </div>
-                      {card.showComparison && card.yesterdayValue !== undefined && (
+                      {isHighPriorityWeekly ? (
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                          {weeklyTotal > 0 
+                            ? `${highPriorityPercentage}% of total`
+                            : "No data"
+                          }
+                        </p>
+                      ) : card.showComparison && card.yesterdayValue !== undefined ? (
                         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                           {card.comparisonLabel || "Yesterday"}: {card.yesterdayValue}
                         </p>
-                      )}
+                      ) : null}
                     </>
                   )}
                 </div>
