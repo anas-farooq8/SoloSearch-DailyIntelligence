@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { createClient } from "@/lib/supabase/client"
 import { useIsDesktop } from "@/lib/hooks/use-media-query"
+import { useSidebar } from "@/lib/hooks/use-sidebar"
 
 interface SharedLayoutProps {
   children: React.ReactNode
@@ -11,28 +11,8 @@ interface SharedLayoutProps {
 
 export function SharedLayout({ children }: SharedLayoutProps) {
   const supabase = createClient()
-  // Initialize state directly from localStorage to prevent flash
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return true
-    const savedState = localStorage.getItem("sidebar-collapsed")
-    return savedState !== "false"
-  })
   const isDesktop = useIsDesktop()
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedState = localStorage.getItem("sidebar-collapsed")
-      setIsCollapsed(savedState !== "false")
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    window.addEventListener("sidebar-toggle", handleStorageChange)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("sidebar-toggle", handleStorageChange)
-    }
-  }, [])
+  const { isCollapsed, isReady } = useSidebar()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -43,11 +23,17 @@ export function SharedLayout({ children }: SharedLayoutProps) {
     <div className="min-h-screen bg-slate-50">
       <Sidebar onSignOut={handleSignOut} />
       <main 
+        suppressHydrationWarning
         style={{
+          // Always start with collapsed margin until localStorage is read
+          // This prevents layout shift on initial load
           marginLeft: isDesktop
-            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            ? (isReady 
+                ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+                : 'var(--sidebar-width-collapsed)' // Always collapsed until ready
+              )
             : '0',
-          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: isReady ? 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
         }}
       >
         {children}

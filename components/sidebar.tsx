@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { useIsDesktop } from "@/lib/hooks/use-media-query"
+import { useSidebar } from "@/lib/hooks/use-sidebar"
 
 interface SidebarProps {
   onSignOut: () => void
@@ -23,16 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ onSignOut }: SidebarProps) {
   const pathname = usePathname()
-  // Initialize state directly from localStorage to prevent flash
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return true
-    const savedState = localStorage.getItem("sidebar-collapsed")
-    if (savedState === null) {
-      localStorage.setItem("sidebar-collapsed", "true")
-      return true
-    }
-    return savedState !== "false"
-  })
+  const { isCollapsed, isReady, toggleCollapsed } = useSidebar()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
@@ -67,16 +59,6 @@ export function Sidebar({ onSignOut }: SidebarProps) {
     setIsMobileOpen(false)
   }, [pathname])
 
-  // Optimized callbacks with useCallback
-  const toggleCollapsed = useCallback(() => {
-    setIsCollapsed(prev => {
-      const newState = !prev
-      localStorage.setItem("sidebar-collapsed", String(newState))
-      window.dispatchEvent(new Event("sidebar-toggle"))
-      return newState
-    })
-  }, [])
-
   const toggleMobile = useCallback(() => {
     setIsMobileOpen(prev => !prev)
   }, [])
@@ -108,14 +90,21 @@ export function Sidebar({ onSignOut }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
+        suppressHydrationWarning
         className={cn(
-          "fixed top-0 left-0 h-full bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out lg:translate-x-0",
+          "fixed top-0 left-0 h-full bg-white border-r border-slate-200 flex flex-col lg:translate-x-0",
           "lg:z-30",
-          isMobileOpen ? "z-50 translate-x-0" : "z-30 -translate-x-full"
+          isMobileOpen ? "z-50 translate-x-0" : "z-30 -translate-x-full",
+          isReady && "transition-all duration-300 ease-in-out" // Only add transition after localStorage is read
         )}
         style={{
+          // Always start with collapsed width until localStorage is read
+          // This prevents visual jump on initial load
           width: isDesktop
-            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            ? (isReady
+                ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+                : 'var(--sidebar-width-collapsed)' // Always collapsed until ready
+              )
             : 'var(--sidebar-width-mobile)'
         }}
       >
@@ -210,8 +199,11 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         onClick={toggleCollapsed}
         className="hidden lg:flex items-center justify-center fixed top-1/2 -translate-y-1/2 z-50 w-5 h-10 bg-blue-600 rounded-r-md hover:bg-blue-700 shadow-md cursor-pointer transition-colors"
         style={{
-          left: isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)',
-          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease'
+          // Always start at collapsed position until localStorage is read
+          left: isReady
+            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            : 'var(--sidebar-width-collapsed)',
+          transition: isReady ? 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease' : 'none'
         }}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >

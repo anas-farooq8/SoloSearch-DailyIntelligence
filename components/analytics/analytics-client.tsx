@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import useSWR from "swr"
 import { Card } from "@/components/ui/card"
 import { DateRange, DateRangePicker } from "@/components/ui/date-range-picker"
@@ -290,11 +290,11 @@ export function AnalyticsClient() {
   // Show skeleton only if loading AND no cached data exists
   if (isLoading && !data) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen">
         {/* Page Header - Show actual content, not skeleton */}
         <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-header-content">
-            <div className="flex-1">
+          <div className="flex items-center justify-between gap-4 page-header-content">
+            <div>
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 className="h-7 w-7 text-blue-600" />
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
@@ -303,13 +303,13 @@ export function AnalyticsClient() {
                 Comprehensive insights and performance metrics
               </p>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Skeleton className="h-10 w-full sm:w-64" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-10 w-64" />
             </div>
           </div>
         </div>
 
-        <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-6">
+        <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {/* KPI Cards Skeleton - Show titles and icons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
@@ -338,91 +338,91 @@ export function AnalyticsClient() {
           </div>
 
           {/* Charts Skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="shadow-sm">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-5">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">Opportunities by Group</h2>
-                    <p className="text-sm text-slate-500 mt-1">Distribution across source groups</p>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Opportunities by Group</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">Distribution across source groups</p>
                   </div>
                 </div>
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-[280px] w-full" />
               </div>
             </Card>
             
             <Card className="shadow-sm">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-5">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
-                    <p className="text-sm text-slate-500 mt-1">What's driving opportunities</p>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">What's driving opportunities</p>
                   </div>
-                  <span className="text-sm text-slate-600 font-semibold bg-slate-100 px-3 py-1 rounded-full">
+                  <span className="text-xs sm:text-sm text-slate-600 font-semibold bg-slate-100 px-2 sm:px-3 py-1 rounded-full">
                     Top 8
                   </span>
                 </div>
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-[280px] w-full" />
               </div>
             </Card>
           </div>
 
           {/* Full Width Chart Skeleton */}
           <Card className="shadow-sm">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Top Sources</h2>
-                  <p className="text-sm text-slate-500 mt-1">Most productive data sources</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Top Sources</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Most productive data sources</p>
                 </div>
               </div>
-              <Skeleton className="h-96 w-full" />
+              <Skeleton className="h-80 sm:h-96 w-full" />
             </div>
           </Card>
 
           {/* Two Column Charts Skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="shadow-sm">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-5">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">Score Distribution</h2>
-                    <p className="text-sm text-slate-500 mt-1">Quality check across scores</p>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Score Distribution</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">Quality check across scores</p>
                   </div>
                 </div>
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-[260px] w-full" />
               </div>
             </Card>
             
             <Card className="shadow-sm">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-5">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">Engagement Tracking</h2>
-                    <p className="text-sm text-slate-500 mt-1">Action status breakdown</p>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900">Engagement Tracking</h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">Action status breakdown</p>
                   </div>
                 </div>
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-[320px] w-full" />
               </div>
             </Card>
           </div>
 
           {/* Time Trend Skeleton */}
           <Card className="shadow-sm">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5 gap-2">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Opportunities Over Time</h2>
-                  <p className="text-sm text-slate-500 mt-1">Daily trend analysis</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Opportunities Over Time</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Daily trend analysis</p>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500" />
                     <span className="text-slate-600">Opportunities</span>
                   </div>
                 </div>
               </div>
-              <Skeleton className="h-80 w-full" />
+              <Skeleton className="h-[280px] w-full" />
             </div>
           </Card>
         </main>
@@ -431,11 +431,11 @@ export function AnalyticsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       {/* Page Header */}
       <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-4 sm:py-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-header-content">
-          <div className="flex-1">
+        <div className="flex items-center justify-between gap-4 page-header-content">
+          <div>
             <div className="flex items-center gap-2 mb-1">
               <BarChart3 className="h-7 w-7 text-blue-600" />
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Analytics Dashboard</h1>
@@ -444,7 +444,7 @@ export function AnalyticsClient() {
               Comprehensive insights and performance metrics
             </p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
             <DateRangePicker 
               value={dateRange} 
               onChange={setDateRange}
@@ -455,10 +455,10 @@ export function AnalyticsClient() {
         </div>
       </div>
 
-      <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-6">
+      <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
         {/* 1. Top-Level Snapshot - KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-white border-blue-100">
             <div className="p-5">
               <div className="flex items-start justify-between">
@@ -557,17 +557,17 @@ export function AnalyticsClient() {
         </div>
 
         {/* 2. Opportunities by Group & 4. Trigger Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Opportunities by Group</h2>
-                  <p className="text-sm text-slate-500 mt-1">Distribution across source groups</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Opportunities by Group</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Distribution across source groups</p>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={groupData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={groupData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <defs>
                     <linearGradient id="groupGradient" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -579,9 +579,9 @@ export function AnalyticsClient() {
                   <YAxis 
                     dataKey="name" 
                     type="category" 
-                    width={180} 
+                    width={150} 
                     stroke="#64748b"
-                    style={{ fontSize: '12px' }}
+                    style={{ fontSize: '11px' }}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -605,17 +605,17 @@ export function AnalyticsClient() {
           </Card>
 
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
-                  <p className="text-sm text-slate-500 mt-1">What's driving opportunities</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Trigger/Signal Breakdown</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">What's driving opportunities</p>
                 </div>
-                <span className="text-sm text-slate-600 font-semibold bg-slate-100 px-3 py-1 rounded-full">
+                <span className="text-xs sm:text-sm text-slate-600 font-semibold bg-slate-100 px-2 sm:px-3 py-1 rounded-full">
                   Top 8
                 </span>
               </div>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <defs>
                     {triggerData.map((_, index) => (
@@ -631,14 +631,15 @@ export function AnalyticsClient() {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={55}
+                    outerRadius={90}
                     paddingAngle={2}
                     animationDuration={600}
                     animationBegin={0}
                     isAnimationActive={true}
-                    label={(entry: any) => entry.percentage > 2 ? `${entry.percentage}%` : ''}
+                    label={(entry: any) => entry.percentage > 3 ? `${entry.percentage}%` : ''}
                     labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
+                    style={{ fontSize: '11px', fontWeight: '600' }}
                   >
                     {triggerData.map((entry, index) => (
                       <Cell 
@@ -664,8 +665,8 @@ export function AnalyticsClient() {
                   <Legend 
                     verticalAlign="bottom" 
                     height={36}
-                    wrapperStyle={{ fontSize: '13px', fontWeight: '500' }}
-                    iconSize={10}
+                    wrapperStyle={{ fontSize: '11px', fontWeight: '500' }}
+                    iconSize={8}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -675,33 +676,33 @@ export function AnalyticsClient() {
 
         {/* 3. Opportunities by Source - Enhanced Table */}
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Top Sources</h2>
-                <p className="text-sm text-slate-500 mt-1">Most productive data sources</p>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">Top Sources</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">Most productive data sources</p>
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {sourceData.map((source, index) => {
                 const maxValue = sourceData[0]?.opportunities || 1
                 const percentage = (source.opportunities / maxValue) * 100
                 
                 return (
                   <div key={source.name} className="group">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 text-green-700 text-xs font-bold">
+                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <span className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 text-green-700 text-xs font-bold flex-shrink-0">
                           {index + 1}
                         </span>
-                        <span className="text-sm font-semibold text-slate-900">{source.name}</span>
+                        <span className="text-xs sm:text-sm font-semibold text-slate-900 truncate">{source.name}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-slate-900">{source.opportunities}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <span className="text-base sm:text-lg font-bold text-slate-900">{source.opportunities}</span>
                       </div>
                     </div>
-                    <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="relative h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden">
                       <div 
                         className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-700 ease-out"
                         style={{ width: `${percentage}%` }}
@@ -715,17 +716,17 @@ export function AnalyticsClient() {
         </Card>
 
         {/* 5. Scoring Distribution & 6. Engagement Tracking */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Score Distribution</h2>
-                  <p className="text-sm text-slate-500 mt-1">Quality check across scores</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Score Distribution</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Quality check across scores</p>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={scoreData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={scoreData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
                   <defs>
                     <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
@@ -762,20 +763,20 @@ export function AnalyticsClient() {
           </Card>
 
           <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Engagement Tracking</h2>
-                  <p className="text-sm text-slate-500 mt-1">Action status breakdown</p>
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">Engagement Tracking</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">Action status breakdown</p>
                 </div>
               </div>
               
-              {/* Donut chart with vertical legend - Centered Layout */}
-              <div className="flex items-center justify-between px-6 gap-8">
-                {/* Donut Chart - Centered with proper padding for labels */}
-                <div className="flex-shrink-0 mx-auto" style={{ width: '340px', height: '300px' }}>
+              {/* Donut chart with legend - Responsive Layout */}
+              <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8 lg:px-6">
+                {/* Donut Chart - Responsive sizing */}
+                <div className="flex-shrink-0 w-full sm:w-auto mx-auto" style={{ maxWidth: '340px', height: '280px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <defs>
                         {engagementData.map((_, index) => (
                           <linearGradient key={`engGrad${index}`} id={`engGrad${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -790,15 +791,15 @@ export function AnalyticsClient() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={65}
-                        outerRadius={100}
+                        innerRadius={60}
+                        outerRadius={95}
                         paddingAngle={2}
                         animationDuration={600}
                         animationBegin={0}
                         isAnimationActive={true}
                         label={(entry: any) => entry.percentage >= 3 ? `${entry.percentage}%` : ''}
                         labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-                        style={{ fontSize: '13px', fontWeight: '600', fill: '#1e293b' }}
+                        style={{ fontSize: '12px', fontWeight: '600', fill: '#1e293b' }}
                       >
                         {engagementData.map((entry, index) => (
                           <Cell 
@@ -821,8 +822,8 @@ export function AnalyticsClient() {
                   </ResponsiveContainer>
                 </div>
                 
-                {/* Legend - Right Side Vertical */}
-                <div className="space-y-1 w-[240px]">
+                {/* Legend - Stacks on mobile, side-by-side on desktop */}
+                <div className="space-y-1 w-full lg:w-[240px]">
                   {engagementData.map((item, index) => (
                     <div 
                       key={index}
@@ -851,21 +852,21 @@ export function AnalyticsClient() {
 
         {/* 7. Time Trend - Area Chart with Gradient */}
         <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-5">
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5 gap-2">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Opportunities Over Time</h2>
-                <p className="text-sm text-slate-500 mt-1">Daily trend analysis</p>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">Opportunities Over Time</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">Daily trend analysis</p>
               </div>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500" />
                   <span className="text-slate-600">Opportunities</span>
                 </div>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <AreaChart data={timeTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={timeTrendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorOpportunities" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -876,12 +877,15 @@ export function AnalyticsClient() {
                 <XAxis 
                   dataKey="date" 
                   stroke="#64748b" 
-                  style={{ fontSize: '11px' }}
+                  style={{ fontSize: '10px' }}
                   tick={{ fill: '#64748b' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis 
                   stroke="#64748b" 
-                  style={{ fontSize: '12px' }}
+                  style={{ fontSize: '10px' }}
                   tick={{ fill: '#64748b' }}
                 />
                 <Tooltip 
@@ -897,13 +901,13 @@ export function AnalyticsClient() {
                   type="monotone"
                   dataKey="opportunities"
                   stroke="#3b82f6"
-                  strokeWidth={3}
+                  strokeWidth={2}
                   fill="url(#colorOpportunities)"
                   animationDuration={800}
                   animationBegin={0}
                   isAnimationActive={true}
-                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4, stroke: "white" }}
-                  activeDot={{ r: 6, strokeWidth: 2 }}
+                  dot={{ fill: "#3b82f6", strokeWidth: 1.5, r: 3, stroke: "white" }}
+                  activeDot={{ r: 5, strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
