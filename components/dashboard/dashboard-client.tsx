@@ -567,14 +567,14 @@ export function DashboardClient({ userId }: DashboardClientProps) {
 
       <main className="w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
-      <KPICards kpis={kpis} loading={isLoading} />
+      <KPICards kpis={kpis} loading={isLoading && !dashboardData} />
 
         <FiltersBar
           filters={filters}
           onFilterChange={handleFilterChange}
           filterOptions={dashboardData?.filterOptions || { sectors: [], triggers: [], sources: [], groups: [], countries: [] }}
           tags={dashboardData?.tags || []}
-          loading={isLoading}
+          loading={isLoading && !dashboardData}
         />
 
       <LeadsTable
@@ -582,7 +582,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
         total={filteredArticles.length}
         page={page}
         onPageChange={setPage}
-        loading={isLoading}
+        loading={isLoading && !dashboardData}
         tags={dashboardData?.tags || []}
         onTagUpdate={handleTagUpdate}
         filters={filters}
