@@ -92,22 +92,6 @@ export async function GET() {
     const sources = [...new Set(articles.map((a) => a.source).filter(Boolean))].sort()
     const groups = [...new Set(articles.map((a) => a.group_name).filter(Boolean))].sort()
 
-    // Create mapping of group to sources (optimized)
-    const groupToSources: Record<string, Set<string>> = {}
-    articles.forEach((article: any) => {
-      if (article.group_name && article.source) {
-        if (!groupToSources[article.group_name]) {
-          groupToSources[article.group_name] = new Set()
-        }
-        groupToSources[article.group_name].add(article.source)
-      }
-    })
-    // Convert Sets to sorted arrays
-    const groupToSourcesArray: Record<string, string[]> = {}
-    Object.keys(groupToSources).forEach(group => {
-      groupToSourcesArray[group] = [...groupToSources[group]].sort()
-    })
-
     // KPIs will be calculated on client-side to use user's local timezone
     // Just return basic awaiting_review count here
     const awaitingReview = articles.filter((article) => !article.tags || article.tags.length === 0).length
@@ -132,11 +116,9 @@ export async function GET() {
         sources,
         groups,
       },
-      groupToSources: groupToSourcesArray,
     })
   } catch (error) {
     console.error("Error in dashboard data API:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-

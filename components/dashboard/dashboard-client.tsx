@@ -25,7 +25,6 @@ interface DashboardData {
     sources: string[]
     groups: string[]
   }
-  groupToSources: Record<string, string[]>
 }
 
 // API fetcher
@@ -291,11 +290,31 @@ export function DashboardClient({ userId }: DashboardClientProps) {
     }
   }, [filters.sectorGroup, dashboardData?.filterOptions?.sectors])
 
+  // Compute groupToSources mapping from articles
+  const groupToSources = useMemo(() => {
+    if (!dashboardData?.articles) return {}
+    
+    const mapping: Record<string, Set<string>> = {}
+    dashboardData.articles.forEach((article) => {
+      if (article.group_name && article.source) {
+        if (!mapping[article.group_name]) {
+          mapping[article.group_name] = new Set()
+        }
+        mapping[article.group_name].add(article.source)
+      }
+    })
+    
+    // Convert Sets to sorted arrays
+    const result: Record<string, string[]> = {}
+    Object.keys(mapping).forEach(group => {
+      result[group] = [...mapping[group]].sort()
+    })
+    
+    return result
+  }, [dashboardData?.articles])
+
   // Update sources based on group selection (similar to how sectors work with sectorGroup)
   useEffect(() => {
-    if (!dashboardData?.groupToSources) return
-
-    const groupToSources = dashboardData.groupToSources
     const selectedGroups = filters.groups
 
     if (selectedGroups.length === 0) {
@@ -319,7 +338,7 @@ export function DashboardClient({ userId }: DashboardClientProps) {
       }
       return prev
     })
-  }, [filters.groups, dashboardData?.groupToSources])
+  }, [filters.groups, groupToSources])
 
   // Separate articles into active and hidden (Not Relevant)
   const { activeArticles, hiddenArticles } = useMemo(() => {
