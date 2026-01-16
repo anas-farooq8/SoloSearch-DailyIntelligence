@@ -111,16 +111,16 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         }}
       >
         {/* Logo Section with Mobile Menu Button Inside */}
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-3">
-            {/* Mobile close button inside sidebar */}
+            {/* Mobile close button inside sidebar - Shows X when open */}
             {!isDesktop && (
               <button
                 onClick={closeMobile}
                 className="lg:hidden p-1 hover:bg-slate-100 rounded transition-colors"
                 aria-label="Close menu"
               >
-                <Menu className="h-6 w-6 text-slate-700" />
+                <X className="h-6 w-6 text-slate-700" />
               </button>
             )}
             
@@ -147,7 +147,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0">
           {navItems.map((item) => {
             const isActive = pathname === item.href
             const Icon = item.icon
@@ -179,8 +179,8 @@ export function Sidebar({ onSignOut }: SidebarProps) {
           })}
         </nav>
 
-        {/* Sign Out Button */}
-        <div className="p-3 border-t border-slate-200">
+        {/* Logout Button - Always visible at bottom */}
+        <div className="p-3 border-t border-slate-200 flex-shrink-0">
           <Button
             variant="ghost"
             onClick={() => {
@@ -188,7 +188,8 @@ export function Sidebar({ onSignOut }: SidebarProps) {
               onSignOut()
             }}
             className={cn(
-              "w-full justify-start gap-3 text-slate-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200",
+              "w-full justify-start gap-3 text-slate-700 transition-all duration-200",
+              "bg-slate-100 hover:bg-slate-200",
               isCollapsed && isDesktop && "justify-center px-2"
             )}
           >
@@ -197,7 +198,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
               <span className={cn(
                 isDesktop && (isCollapsed ? "sidebar-text-exit" : "sidebar-text-enter")
               )}>
-                Sign Out
+                Logout
               </span>
             )}
           </Button>
