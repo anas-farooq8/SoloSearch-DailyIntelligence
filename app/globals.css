@@ -178,10 +178,10 @@
 
 /* Sidebar width variables */
 :root {
-  --sidebar-width-collapsed: 5rem;
+  --sidebar-width-collapsed: 4rem;
   --sidebar-width-expanded: 16rem;
-  --sidebar-width-mobile: 17.5rem;
-  --mobile-menu-size: 3.5rem;
+  --sidebar-width-mobile: 16rem;
+  --mobile-menu-size: 3rem;
 }
 
 /* Sidebar animations - optimized for performance */
