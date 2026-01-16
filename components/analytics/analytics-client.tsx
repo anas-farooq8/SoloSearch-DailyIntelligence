@@ -264,17 +264,29 @@ export function AnalyticsClient() {
   const timeTrendData = useMemo(() => {
     const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to })
     
+    // Check if date range spans multiple years
+    const startYear = dateRange.from.getFullYear()
+    const endYear = dateRange.to.getFullYear()
+    const spansMultipleYears = startYear !== endYear
+    
+    // Use appropriate date format (yy for 2-digit year)
+    const dateFormat = spansMultipleYears ? "MMM d, ''yy" : "MMM d"
+    
     const trend = days.map((day) => {
       const dayStart = startOfDay(day)
       const dayEnd = endOfDay(day)
       
       const count = filteredArticles.filter((article) => {
+        // Handle ISO 8601 format: "2026-01-14T09:34:12.576+00:00"
+        if (!article.processed_at) return false
         const articleDate = new Date(article.processed_at)
+        // Verify date is valid
+        if (isNaN(articleDate.getTime())) return false
         return articleDate >= dayStart && articleDate <= dayEnd
       }).length
 
       return {
-        date: format(day, "MMM d"),
+        date: format(day, dateFormat),
         opportunities: count,
       }
     })
@@ -648,7 +660,7 @@ export function AnalyticsClient() {
               </div>
               
               <ResponsiveContainer width="100%" height={340}>
-                  <PieChart>
+                  <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <defs>
                       {triggerData.map((_, index) => (
                         <linearGradient key={`grad-${index}`} id={`triggerGrad${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -663,7 +675,7 @@ export function AnalyticsClient() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={isDesktop ? 90 : 60}
+                      innerRadius={isDesktop ? 90 : 65}
                       outerRadius={isDesktop ? 140 : 100}
                       paddingAngle={2}
                       animationDuration={600}
@@ -671,7 +683,7 @@ export function AnalyticsClient() {
                       isAnimationActive={true}
                       label={(entry: any) => `${entry.percentage}%`}
                       labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-                      style={{ fontSize: '11px', fontWeight: '600' }}
+                      style={{ fontSize: '12px', fontWeight: '600', fill: '#1e293b' }}
                     >
                       {triggerData.map((entry, index) => (
                         <Cell 
@@ -886,9 +898,9 @@ export function AnalyticsClient() {
               {/* Donut chart with legend - Responsive Layout */}
               <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-8 lg:px-6">
                 {/* Donut Chart - Responsive sizing */}
-                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ maxWidth: '340px' }}>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <div className="flex-shrink-0 w-full sm:w-auto mx-auto lg:mx-0" style={{ width: '100%', maxWidth: '340px', minWidth: '280px' }}>
+                  <ResponsiveContainer width="100%" height={340}>
+                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                       <defs>
                         {engagementData.map((_, index) => (
                           <linearGradient key={`engGrad${index}`} id={`engGrad${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -903,7 +915,7 @@ export function AnalyticsClient() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={isDesktop ? 90 : 60}
+                        innerRadius={isDesktop ? 90 : 65}
                         outerRadius={isDesktop ? 140 : 100}
                         paddingAngle={2}
                         animationDuration={600}
