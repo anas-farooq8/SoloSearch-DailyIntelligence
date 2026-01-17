@@ -126,8 +126,9 @@ export function Sidebar({ onSignOut }: SidebarProps) {
           {(!isCollapsed || !isDesktop) && (
             <div className="min-w-0 flex-1">
               <h1 className="text-base font-bold text-slate-900 truncate">
-                SEO Reporting
+                Solo Search
               </h1>
+              <p className="text-xs text-slate-600 truncate">Daily Intelligence</p>
             </div>
           )}
         </div>

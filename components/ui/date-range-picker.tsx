@@ -192,10 +192,9 @@ export function DateRangePicker({ value, onChange, className, minDate, maxDate }
                   }}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-md text-sm transition-colors cursor-pointer",
-                    "hover:bg-slate-100",
                     activePreset === "custom"
-                      ? "bg-blue-50 text-blue-600 font-medium"
-                      : "text-slate-700"
+                      ? "bg-blue-50 text-blue-600 font-medium hover:bg-blue-100"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   )}
                 >
                   Custom
