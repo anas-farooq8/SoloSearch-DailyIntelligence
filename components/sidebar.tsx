@@ -24,7 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ onSignOut }: SidebarProps) {
   const pathname = usePathname()
-  const { isCollapsed, isReady, toggleCollapsed } = useSidebar()
+  const { isCollapsed, toggleCollapsed } = useSidebar()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
@@ -92,19 +92,13 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       <aside
         suppressHydrationWarning
         className={cn(
-          "fixed top-0 left-0 h-full bg-white border-r border-slate-200 flex flex-col lg:translate-x-0",
-          "lg:z-30",
-          isMobileOpen ? "z-50 translate-x-0" : "z-30 -translate-x-full",
-          isReady && "transition-all duration-300 ease-in-out" // Only add transition after localStorage is read
+          "fixed top-0 left-0 h-full bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out",
+          "lg:z-30 lg:translate-x-0",
+          isMobileOpen ? "z-50 translate-x-0" : "z-30 -translate-x-full"
         )}
         style={{
-          // Always start with collapsed width until localStorage is read
-          // This prevents visual jump on initial load
           width: isDesktop
-            ? (isReady
-                ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
-                : 'var(--sidebar-width-collapsed)' // Always collapsed until ready
-              )
+            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
             : 'var(--sidebar-width-mobile)'
         }}
       >
@@ -199,11 +193,8 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         onClick={toggleCollapsed}
         className="hidden lg:flex items-center justify-center fixed top-1/2 -translate-y-1/2 z-50 w-5 h-10 bg-blue-600 rounded-r-md hover:bg-blue-700 shadow-md cursor-pointer transition-colors"
         style={{
-          // Always start at collapsed position until localStorage is read
-          left: isReady
-            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
-            : 'var(--sidebar-width-collapsed)',
-          transition: isReady ? 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease' : 'none'
+          left: isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)',
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease'
         }}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >

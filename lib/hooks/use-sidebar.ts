@@ -1,44 +1,50 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { createContext, useContext, useState, ReactNode } from "react"
 
-export function useSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(true)
-  const [isReady, setIsReady] = useState(false)
+interface SidebarContextType {
+  isCollapsed: boolean
+  toggleCollapsed: () => void
+}
 
-  useEffect(() => {
-    // Read from localStorage on mount
+const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
+
+export function SidebarProvider({ children }: { children: ReactNode }) {
+  // Read from localStorage synchronously on initialization to prevent flash
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return true
     const savedState = localStorage.getItem("sidebar-collapsed")
+    
+    // If no saved state, initialize with default (collapsed) and save it
     if (savedState === null) {
       localStorage.setItem("sidebar-collapsed", "true")
-    } else {
-      setIsCollapsed(savedState !== "false")
+      return true
     }
-    setIsReady(true)
-
-    // Listen for changes from other components
-    const handleStorageChange = () => {
-      const savedState = localStorage.getItem("sidebar-collapsed")
-      setIsCollapsed(savedState !== "false")
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    window.addEventListener("sidebar-toggle", handleStorageChange)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("sidebar-toggle", handleStorageChange)
-    }
-  }, [])
+    
+    return savedState === "true"
+  })
 
   const toggleCollapsed = () => {
     setIsCollapsed((prev) => {
       const newState = !prev
       localStorage.setItem("sidebar-collapsed", String(newState))
-      window.dispatchEvent(new Event("sidebar-toggle"))
       return newState
     })
   }
 
-  return { isCollapsed, isReady, toggleCollapsed }
+  const value = { isCollapsed, toggleCollapsed }
+
+  return React.createElement(
+    SidebarContext.Provider,
+    { value },
+    children
+  )
+}
+
+export function useSidebar() {
+  const context = useContext(SidebarContext)
+  if (context === undefined) {
+    throw new Error("useSidebar must be used within a SidebarProvider")
+  }
+  return context
 }
