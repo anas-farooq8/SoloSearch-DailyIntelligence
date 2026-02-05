@@ -1,28 +1,30 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
 
 interface SidebarContextType {
   isCollapsed: boolean
   toggleCollapsed: () => void
+  isHydrated: boolean
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  // Read from localStorage synchronously on initialization to prevent flash
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return true
+  // Always start with default value to match server-side render
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  // After hydration, read from localStorage
+  useEffect(() => {
     const savedState = localStorage.getItem("sidebar-collapsed")
     
-    // If no saved state, initialize with default (collapsed) and save it
-    if (savedState === null) {
-      localStorage.setItem("sidebar-collapsed", "true")
-      return true
+    if (savedState !== null) {
+      setIsCollapsed(savedState === "true")
     }
     
-    return savedState === "true"
-  })
+    setIsHydrated(true)
+  }, [])
 
   const toggleCollapsed = () => {
     setIsCollapsed((prev) => {
@@ -32,7 +34,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const value = { isCollapsed, toggleCollapsed }
+  const value = { isCollapsed, toggleCollapsed, isHydrated }
 
   return React.createElement(
     SidebarContext.Provider,

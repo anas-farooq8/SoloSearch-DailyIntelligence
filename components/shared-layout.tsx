@@ -12,7 +12,7 @@ interface SharedLayoutProps {
 function SharedLayoutContent({ children }: SharedLayoutProps) {
   const supabase = createClient()
   const isDesktop = useIsDesktop()
-  const { isCollapsed } = useSidebar()
+  const { isCollapsed, isHydrated } = useSidebar()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -25,8 +25,10 @@ function SharedLayoutContent({ children }: SharedLayoutProps) {
       <main 
         suppressHydrationWarning
         style={{
-          marginLeft: isDesktop
+          marginLeft: isDesktop && isHydrated
             ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            : isDesktop
+            ? 'var(--sidebar-width-collapsed)'
             : '0',
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}

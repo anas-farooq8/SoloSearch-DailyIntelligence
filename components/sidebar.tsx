@@ -24,7 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ onSignOut }: SidebarProps) {
   const pathname = usePathname()
-  const { isCollapsed, toggleCollapsed } = useSidebar()
+  const { isCollapsed, toggleCollapsed, isHydrated } = useSidebar()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
@@ -97,8 +97,10 @@ export function Sidebar({ onSignOut }: SidebarProps) {
           isMobileOpen ? "z-50 translate-x-0" : "z-30 -translate-x-full"
         )}
         style={{
-          width: isDesktop
+          width: isDesktop && isHydrated
             ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            : isDesktop
+            ? 'var(--sidebar-width-collapsed)'
             : 'var(--sidebar-width-mobile)'
         }}
       >
@@ -192,9 +194,12 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       {/* Desktop Collapse Toggle - Floating Button */}
       <button
         onClick={toggleCollapsed}
+        suppressHydrationWarning
         className="hidden lg:flex items-center justify-center fixed top-1/2 -translate-y-1/2 z-50 w-5 h-10 bg-blue-600 rounded-r-md hover:bg-blue-700 shadow-md cursor-pointer transition-colors"
         style={{
-          left: isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)',
+          left: isHydrated
+            ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
+            : 'var(--sidebar-width-collapsed)',
           transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease'
         }}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
