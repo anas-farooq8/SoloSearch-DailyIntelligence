@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import type React from "react"
 
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 import { Geist, Geist_Mono, Source_Serif_4 } from 'next/font/google'
@@ -75,7 +74,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.variable} ${geistMono.variable} ${sourceSerif.variable} font-sans antialiased`}>
         {children}
-        <Analytics />
       </body>
     </html>
   )

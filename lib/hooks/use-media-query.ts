@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false)
+  // Initialize with correct value to prevent hydration mismatch
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(query).matches
+  })
 
   useEffect(() => {
     const media = window.matchMedia(query)
     
-    // Set initial value
-    setMatches(media.matches)
+    // Update if initial value was wrong
+    if (media.matches !== matches) {
+      setMatches(media.matches)
+    }
 
     // Debounced listener for performance
     let timeoutId: NodeJS.Timeout
@@ -26,7 +32,7 @@ export function useMediaQuery(query: string): boolean {
       clearTimeout(timeoutId)
       media.removeEventListener('change', listener)
     }
-  }, [query])
+  }, [query, matches])
 
   return matches
 }

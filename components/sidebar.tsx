@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -28,8 +28,8 @@ export function Sidebar({ onSignOut }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
-  // Memoize navigation items
-  const navItems = useMemo(() => [
+  // Static navigation items - no need to memoize since they never change
+  const navItems = [
     {
       href: "/dashboard",
       icon: LayoutDashboard,
@@ -40,7 +40,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       icon: BarChart3,
       label: "Analytics",
     },
-  ], [])
+  ]
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -59,13 +59,13 @@ export function Sidebar({ onSignOut }: SidebarProps) {
     setIsMobileOpen(false)
   }, [pathname])
 
-  const toggleMobile = useCallback(() => {
+  const toggleMobile = () => {
     setIsMobileOpen(prev => !prev)
-  }, [])
+  }
 
-  const closeMobile = useCallback(() => {
+  const closeMobile = () => {
     setIsMobileOpen(false)
-  }, [])
+  }
 
   return (
     <>
@@ -168,10 +168,10 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         <div className="border-t border-slate-200 p-3 flex-shrink-0">
           <Button
             variant="ghost"
-            onClick={useCallback(() => {
+            onClick={() => {
               closeMobile()
               onSignOut()
-            }, [closeMobile, onSignOut])}
+            }}
             className={cn(
               "w-full justify-start gap-3 text-slate-700 transition-all duration-200 h-11 touch-manipulation",
               "bg-slate-100 hover:bg-slate-200 rounded-md",
