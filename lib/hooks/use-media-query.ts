@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  // Initialize with correct value to prevent hydration mismatch
-  const [matches, setMatches] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia(query).matches
-  })
+  // Always start with false so server and client render the same HTML on first paint.
+  // useEffect updates to the real value after hydration to avoid React hydration errors.
+  const [matches, setMatches] = useState(false)
 
   useEffect(() => {
     const media = window.matchMedia(query)

@@ -70,7 +70,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
   return (
     <>
       {/* Mobile Menu Button - Outside Sidebar */}
-      {!isMobileOpen && (
+      {isHydrated && !isMobileOpen && (
         <button
           onClick={toggleMobile}
           className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md border border-slate-200 hover:bg-slate-50 transition-colors touch-manipulation"
@@ -81,7 +81,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
       )}
 
       {/* Mobile Overlay */}
-      {isMobileOpen && (
+      {isHydrated && isMobileOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={closeMobile}
@@ -107,7 +107,7 @@ export function Sidebar({ onSignOut }: SidebarProps) {
         {/* Logo Section with Mobile Menu Button Inside */}
         <div className="h-16 px-4 border-b border-slate-200 flex items-center gap-3 flex-shrink-0">
           {/* Mobile close button inside sidebar - Shows X when open */}
-          {!isDesktop && (
+          {isHydrated && !isDesktop && (
             <button
               onClick={closeMobile}
               className="lg:hidden p-1 hover:bg-slate-100 rounded-md transition-colors touch-manipulation"
